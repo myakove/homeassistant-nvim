@@ -31,12 +31,27 @@ function M.create_centered_float(config)
     row = row,
     col = col,
     style = "minimal",
-    border = border,
   }
   
-  if config.title then
-    win_opts.title = config.title
-    win_opts.title_pos = "center"
+  -- Handle border configuration
+  if type(border) == "table" and border.text then
+    -- Advanced border with text
+    win_opts.border = border.style or "rounded"
+    if border.text.top then
+      win_opts.title = border.text.top
+      win_opts.title_pos = border.text.top_align or "center"
+    end
+    if border.text.bottom then
+      win_opts.footer = border.text.bottom
+      win_opts.footer_pos = border.text.bottom_align or "center"
+    end
+  else
+    -- Simple border
+    win_opts.border = border
+    if config.title then
+      win_opts.title = config.title
+      win_opts.title_pos = "center"
+    end
   end
   
   -- Create window

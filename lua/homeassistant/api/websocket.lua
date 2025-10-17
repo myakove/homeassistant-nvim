@@ -385,6 +385,70 @@ function M:get_services(callback)
   end
 end
 
+-- Get area registry
+function M:get_areas(callback)
+  local logger = require("homeassistant.utils.logger")
+  
+  if self.state ~= STATE.CONNECTED then
+    if callback then
+      callback("Not connected", nil)
+    end
+    return
+  end
+  
+  local id = self:_send_message({
+    type = "config/area_registry/list",
+  })
+  
+  if not id then
+    logger.error("Failed to send get_areas message")
+    if callback then
+      callback("Failed to send message", nil)
+    end
+    return
+  end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if callback then
+        callback(err, result)
+      end
+    end,
+  }
+end
+
+-- Get entity registry (includes area assignments)
+function M:get_entity_registry(callback)
+  local logger = require("homeassistant.utils.logger")
+  
+  if self.state ~= STATE.CONNECTED then
+    if callback then
+      callback("Not connected", nil)
+    end
+    return
+  end
+  
+  local id = self:_send_message({
+    type = "config/entity_registry/list",
+  })
+  
+  if not id then
+    logger.error("Failed to send get_entity_registry message")
+    if callback then
+      callback("Failed to send message", nil)
+    end
+    return
+  end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if callback then
+        callback(err, result)
+      end
+    end,
+  }
+end
+
 -- Call service
 function M:call_service(domain, service, service_data, callback)
   local id = self:_send_message({
