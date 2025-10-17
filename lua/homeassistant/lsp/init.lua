@@ -9,8 +9,6 @@ function M.setup(api, config)
   M.api = api
   M.config = config or {}
   
-  vim.notify("HA LSP: Setup called!", vim.log.levels.INFO)
-  
   -- Setup diagnostics validation
   if M.config.diagnostics ~= false then
     vim.api.nvim_create_autocmd({"BufEnter", "BufWritePost"}, {
@@ -19,12 +17,6 @@ function M.setup(api, config)
         M.validate_buffer()
       end,
     })
-    vim.notify("HA LSP: Diagnostics enabled", vim.log.levels.INFO)
-  end
-  
-  -- Hover is available via :HAHover command (don't override K)
-  if M.config.hover ~= false then
-    vim.notify("HA LSP: Hover available via :HAHover command", vim.log.levels.INFO)
   end
   
   -- Add go-to-definition keymap
@@ -67,16 +59,12 @@ end
 
 -- Show hover documentation
 function M.show_hover()
-  vim.notify("HA Hover: Function called", vim.log.levels.INFO)
-  
   if not M.api then
     vim.notify("Home Assistant API not available", vim.log.levels.WARN)
     return
   end
   
   local entity_id = M.get_entity_under_cursor()
-  vim.notify("HA Hover: Detected entity = " .. tostring(entity_id), vim.log.levels.INFO)
-  
   if not entity_id then
     vim.notify("No entity ID under cursor", vim.log.levels.INFO)
     return
