@@ -25,6 +25,13 @@ function M.setup(user_config)
   -- Setup completion sources
   require("homeassistant.completion").setup(M._api)
   
+  -- Setup LSP features (if enabled in config)
+  local user_cfg = config.get()
+  if user_cfg.lsp and user_cfg.lsp.enabled ~= false then
+    require("homeassistant.lsp").setup(M._api, user_cfg.lsp)
+    require("homeassistant.utils.logger").debug("LSP features enabled")
+  end
+  
   -- Register commands
   M._register_commands()
   
