@@ -35,6 +35,9 @@ function M.setup(user_config)
   -- Register commands
   M._register_commands()
   
+  -- Setup keymaps (if enabled)
+  M._setup_keymaps()
+  
   M._initialized = true
   require("homeassistant.utils.logger").debug("Home Assistant plugin initialized")
 end
@@ -166,6 +169,45 @@ function M._register_commands()
       vim.notify("HADebug error: " .. tostring(err), vim.log.levels.ERROR)
     end
   end, { desc = "Show Home Assistant debug info" })
+end
+
+-- Setup keymaps
+function M._setup_keymaps()
+  local user_cfg = config.get()
+  
+  -- Check if keymaps are enabled
+  if not user_cfg.keymaps or user_cfg.keymaps.enabled == false then
+    return
+  end
+  
+  local maps = user_cfg.keymaps
+  
+  -- Dashboard keymap
+  if maps.dashboard then
+    vim.keymap.set("n", maps.dashboard, "<cmd>HADashboard<cr>", 
+      { desc = "HA Dashboard", silent = true })
+  end
+  
+  -- Picker keymap (only if telescope available)
+  if maps.picker then
+    local has_telescope = pcall(require, "telescope")
+    if has_telescope then
+      vim.keymap.set("n", maps.picker, "<cmd>HAPicker<cr>", 
+        { desc = "HA Entity Picker", silent = true })
+    end
+  end
+  
+  -- Reload cache keymap
+  if maps.reload_cache then
+    vim.keymap.set("n", maps.reload_cache, "<cmd>HAReloadCache<cr>", 
+      { desc = "HA Reload Cache", silent = true })
+  end
+  
+  -- Debug keymap
+  if maps.debug then
+    vim.keymap.set("n", maps.debug, "<cmd>HADebug<cr>", 
+      { desc = "HA Debug Info", silent = true })
+  end
 end
 
 -- Get API client instance

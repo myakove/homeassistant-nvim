@@ -59,6 +59,15 @@ local defaults = {
     enabled = false, -- Disabled by default
     auto_reconnect = true,
   },
+  
+  -- Keymaps
+  keymaps = {
+    enabled = true, -- Set to false to disable all default keymaps
+    dashboard = "<leader>hd",       -- Toggle dashboard
+    picker = "<leader>hp",           -- Open entity picker (requires telescope)
+    reload_cache = "<leader>hr",     -- Reload entity cache
+    debug = "<leader>hD",            -- Show debug info
+  },
 }
 
 local config = vim.deepcopy(defaults)

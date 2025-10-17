@@ -191,6 +191,33 @@ require("homeassistant").setup({
   logging = {
     level = "info",                  -- Default: "info" (debug, info, warn, error)
   },
+  
+  keymaps = {
+    enabled = true,                  -- Default: true - Set to false to disable all keymaps
+    dashboard = "<leader>hd",        -- Default: <leader>hd - Toggle dashboard
+    picker = "<leader>hp",           -- Default: <leader>hp - Entity picker (requires telescope)
+    reload_cache = "<leader>hr",     -- Default: <leader>hr - Reload cache
+    debug = "<leader>hD",            -- Default: <leader>hD - Show debug info
+  },
+})
+```
+</details>
+
+**Keymaps Configuration:**
+
+The plugin sets up default keymaps automatically. You can:
+- **Disable all keymaps:** Set `keymaps.enabled = false`
+- **Customize individual keymaps:** Change the key in config
+- **Set a keymap to `nil`:** Disable that specific keymap
+
+```lua
+require("homeassistant").setup({
+  keymaps = {
+    enabled = true,
+    dashboard = "<leader>ha",      -- Custom keymap
+    picker = nil,                  -- Disable picker keymap
+    reload_cache = "<F5>",         -- Use F5 for reload
+  },
 })
 ```
 </details>
@@ -332,12 +359,29 @@ self.call_service("climate.")     # All climate entities
 - **Case-insensitive**: `sensor`, `Sensor`, `SENSOR` all work
 - **Real-time data**: Entities and states are fetched directly from your Home Assistant instance
 
-### Keybindings Example
+### Default Keymaps
+
+The plugin automatically sets up these keymaps:
+
+| Keymap | Command | Description |
+|--------|---------|-------------|
+| `<leader>hd` | `:HADashboard` | Toggle entity dashboard |
+| `<leader>hp` | `:HAPicker` | Open entity picker (requires telescope) |
+| `<leader>hr` | `:HAReloadCache` | Reload entity cache |
+| `<leader>hD` | `:HADebug` | Show debug information |
+
+**Customize or disable keymaps in your config:**
 
 ```lua
-vim.keymap.set("n", "<leader>hd", "<cmd>HADashboard<cr>", { desc = "HA Dashboard" })
-vim.keymap.set("n", "<leader>hp", "<cmd>HAPicker<cr>", { desc = "HA Entity Picker" })
-vim.keymap.set("n", "<leader>hr", "<cmd>HAReloadCache<cr>", { desc = "HA Reload Cache" })
+require("homeassistant").setup({
+  keymaps = {
+    enabled = true,               -- Set to false to disable all keymaps
+    dashboard = "<leader>ha",     -- Change to your preferred key
+    picker = nil,                 -- Set to nil to disable this keymap
+    reload_cache = "<F5>",        -- Use F5 for reload
+    debug = "<leader>hD",         -- Keep default
+  },
+})
 ```
 
 ## Architecture
