@@ -64,6 +64,12 @@ Full configuration options:
         enabled = true,
         auto_trigger = true,
       },
+      lsp = {
+        enabled = true,
+        hover = true,
+        diagnostics = true,
+        go_to_definition = true,
+      },
       ui = {
         dashboard = {
           width = 0.8,
@@ -78,6 +84,14 @@ Full configuration options:
       logging = {
         level = "info",
       },
+      keymaps = {
+        enabled = true,
+        dashboard = "<leader>hd",
+        picker = "<leader>hp",
+        edit_dashboard = "<leader>he",
+        reload_cache = "<leader>hr",
+        debug = "<leader>hD",
+      },
     })
 <
 
@@ -90,14 +104,20 @@ Full configuration options:
 :HAEntityState {entity_id}                              *:HAEntityState*
     View detailed state information for a specific entity
 
-:HAServiceCall                                          *:HAServiceCall*
-    Interactively call a Home Assistant service
-
 :HAPicker                                                    *:HAPicker*
     Open Telescope picker for entity selection (requires telescope.nvim)
 
+:HAEditDashboard                                        *:HAEditDashboard*
+    Edit Home Assistant Lovelace dashboards
+
 :HAReloadCache                                          *:HAReloadCache*
     Manually reload the entity cache from Home Assistant
+
+:HADebug                                                      *:HADebug*
+    Show plugin debug information (includes HA version when connected)
+
+:checkhealth homeassistant                          *:checkhealth-homeassistant*
+    Run health check to verify installation and connection
 
 ==============================================================================
 6. FUNCTIONS                                        *homeassistant-functions*
