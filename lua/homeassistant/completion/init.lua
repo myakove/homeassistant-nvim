@@ -32,15 +32,21 @@ end
 
 -- Setup blink.cmp native sources
 function M._setup_blink(api, logger)
-  local blink_sources = require("homeassistant.completion.blink")
-  
-  -- Register sources with blink.cmp config
+  -- blink.cmp sources are registered directly via user config
   -- Users need to add these to their blink.cmp config:
   -- sources = {
   --   default = { ..., "homeassistant_entities", "homeassistant_services" },
   --   providers = {
-  --     homeassistant_entities = { name = "HomeAssistant", module = "homeassistant.completion.blink" },
-  --     homeassistant_services = { name = "HomeAssistant", module = "homeassistant.completion.blink" },
+  --     homeassistant_entities = {
+  --       name = "HomeAssistant",
+  --       module = "homeassistant.completion.blink_entities",
+  --       score_offset = 100,
+  --     },
+  --     homeassistant_services = {
+  --       name = "HomeAssistant",
+  --       module = "homeassistant.completion.blink_services",
+  --       score_offset = 100,
+  --     },
   --   }
   -- }
   
