@@ -9,7 +9,6 @@ function M.setup(user_config)
   local cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" }
   local filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python" }
   
-  -- Register homeassistant LSP using native Neovim API with REAL filetypes
   vim.lsp.config('homeassistant', {
     cmd = cmd,
     filetypes = filetypes,
@@ -23,14 +22,13 @@ function M.setup(user_config)
   
   vim.lsp.enable('homeassistant')
   
-  -- Create hidden keepalive buffer to start LSP immediately on Neovim launch
+  -- Start LSP immediately with hidden keepalive buffer
   vim.schedule(function()
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_name(buf, 'homeassistant-keepalive.yaml')
     vim.bo[buf].bufhidden = 'hide'
-    vim.bo[buf].filetype = 'yaml' -- Use real filetype
+    vim.bo[buf].filetype = 'yaml'
     
-    -- Start LSP on keepalive buffer
     vim.lsp.start({
       name = 'homeassistant',
       cmd = cmd,
