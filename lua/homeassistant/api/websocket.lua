@@ -24,7 +24,6 @@ function M.new(config)
   self.url = host .. "/api/websocket"
   
   self.token = config.token
-  self.auto_reconnect = true
   
   -- Connection state
   self.state = STATE.DISCONNECTED
@@ -461,19 +460,12 @@ function M:_handle_disconnect()
     self.job_id = nil
   end
   
-  -- Auto-reconnect if enabled
-  if self.auto_reconnect then
-    logger.debug("Reconnecting in 5 seconds...")
-    vim.defer_fn(function()
-      self:connect()
-    end, 5000)
-  end
+  logger.info("Disconnected from Home Assistant. Run :HAConnect to reconnect.")
 end
 
 -- Disconnect
 function M:disconnect()
   logger.debug("Disconnecting from Home Assistant WebSocket")
-  self.auto_reconnect = false
   
   if self.job_id and self.job_id > 0 then
     vim.fn.jobstop(self.job_id)

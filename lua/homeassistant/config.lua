@@ -57,7 +57,6 @@ local defaults = {
   -- WebSocket settings (for live updates)
   websocket = {
     enabled = false, -- Disabled by default
-    auto_reconnect = true,
   },
   
   -- Keymaps
