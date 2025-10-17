@@ -195,6 +195,61 @@ require("homeassistant").setup({
 ```
 </details>
 
+### Environment Variables
+
+For better security, you can configure the plugin using environment variables instead of hardcoding sensitive information in your config files:
+
+**Supported environment variables:**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `HOMEASSISTANT_HOST` | Home Assistant URL | `http://192.168.1.100:8123` |
+| `HOMEASSISTANT_TOKEN` | Long-lived access token | `eyJhbGc...` |
+| `HOMEASSISTANT_TIMEOUT` | Request timeout (ms) | `5000` |
+| `HOMEASSISTANT_VERIFY_SSL` | SSL verification | `true` or `false` |
+
+**Usage examples:**
+
+**Option 1: Set in shell profile (`~/.bashrc` or `~/.zshrc`):**
+
+```bash
+export HOMEASSISTANT_HOST="http://homeassistant.local:8123"
+export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
+```
+
+**Option 2: Minimal Neovim config (reads from environment):**
+
+```lua
+require("homeassistant").setup({
+  -- Token and host will be read from HOMEASSISTANT_TOKEN and HOMEASSISTANT_HOST
+  -- No need to hardcode them!
+})
+```
+
+**Option 3: Mix environment variables with config:**
+
+```lua
+require("homeassistant").setup({
+  homeassistant = {
+    host = os.getenv("HOMEASSISTANT_HOST"),      -- Explicitly read from env
+    token = os.getenv("HOMEASSISTANT_TOKEN"),    -- Explicitly read from env
+  },
+  lsp = {
+    enabled = true,  -- Override defaults as needed
+  },
+})
+```
+
+**Priority order (highest to lowest):**
+1. User config in `setup()` - **Highest priority**
+2. Environment variables
+3. Default values - **Lowest priority**
+
+**Benefits:**
+- ✅ **Security**: Tokens not stored in config files or git repos
+- ✅ **Flexibility**: Easy to switch between dev/prod environments
+- ✅ **Portability**: Same config works across different machines
+
 ## Usage
 
 ### Getting a Long-Lived Access Token
