@@ -52,7 +52,7 @@ brew install uv          # macOS
 
 ```lua
 {
-  "myakove/homeassistant.nvim",
+  "myakove/homeassistant-nvim",
   dependencies = {
     "saghen/blink.cmp", -- optional but recommended
     "nvim-telescope/telescope.nvim", -- optional
@@ -94,7 +94,7 @@ brew install uv          # macOS
 
 ```lua
 {
-  "myakove/homeassistant.nvim",
+  "myakove/homeassistant-nvim",
   dependencies = {
     "hrsh7th/nvim-cmp",
     "nvim-telescope/telescope.nvim",
@@ -123,7 +123,7 @@ require("cmp").setup({
 
 ```lua
 use {
-  "myakove/homeassistant.nvim",
+  "myakove/homeassistant-nvim",
   requires = {
     "hrsh7th/nvim-cmp",
     "nvim-telescope/telescope.nvim",

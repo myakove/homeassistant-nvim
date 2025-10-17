@@ -37,7 +37,7 @@ communication and updates.
 Using lazy.nvim:
 >lua
     {
-      "myakove/homeassistant.nvim",
+      "myakove/homeassistant-nvim",
       config = function()
         require("homeassistant").setup({
           homeassistant = {
