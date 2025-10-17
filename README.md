@@ -18,7 +18,7 @@ A Neovim plugin for seamless Home Assistant integration using WebSocket API, pro
 - **Completion engine (pick one):**
   - [blink.cmp](https://github.com/saghen/blink.cmp) - Modern, fast completion (recommended)
   - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) - Popular completion framework
-- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) - For entity picker (optional)
+- [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) (optional) - For entity picker
 - Home Assistant instance with API access
 
 ## Installation
