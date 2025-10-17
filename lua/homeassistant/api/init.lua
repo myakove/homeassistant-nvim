@@ -29,6 +29,18 @@ function M.new(config)
       self.entities:clear_cache()
       return self.entities:get_all()
     end,
+    
+    get_dashboards = function(self, callback)
+      return self.client:get_dashboards(callback)
+    end,
+    
+    get_dashboard_config = function(self, url_path, callback)
+      return self.client:get_dashboard_config(url_path, callback)
+    end,
+    
+    save_dashboard_config = function(self, url_path, config, callback)
+      return self.client:save_dashboard_config(url_path, config, callback)
+    end,
   }
 end
 
