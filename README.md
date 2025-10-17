@@ -231,11 +231,11 @@ export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
 
 ### Commands
 
-- `:HADashboard` - Toggle the entity dashboard (readonly view)
-- `:HAEntityState <entity_id>` - View entity state in floating window (readonly)
-- `:HAPicker` - Open Telescope picker for entity selection (readonly)
+- `:HADashboard` - Toggle the entity dashboard
+- `:HAEntityState <entity_id>` - View entity state in floating window
+- `:HAPicker` - Open Telescope picker for entity selection
 - `:HAReloadCache` - Manually reload entity cache
-- `:HAHover` - Show entity info for entity under cursor (readonly)
+- `:HAHover` - Show entity info for entity under cursor
 - `:HADebug` - Show plugin debug information (includes HA version when connected)
 - `:checkhealth homeassistant` - Run health check (verify installation and connection)
 
