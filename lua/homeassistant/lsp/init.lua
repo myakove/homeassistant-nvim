@@ -71,12 +71,16 @@ end
 
 -- Show hover documentation
 function M.show_hover()
+  vim.notify("HA Hover: Function called", vim.log.levels.INFO)
+  
   if not M.api then
     vim.notify("Home Assistant API not available", vim.log.levels.WARN)
     return
   end
   
   local entity_id = M.get_entity_under_cursor()
+  vim.notify("HA Hover: Detected entity = " .. tostring(entity_id), vim.log.levels.INFO)
+  
   if not entity_id then
     vim.notify("No entity ID under cursor", vim.log.levels.INFO)
     return
