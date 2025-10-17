@@ -21,10 +21,6 @@ function M.new(config)
       return self.client:get_services(callback)
     end,
     
-    call_service = function(self, domain, service, data, callback)
-      return self.client:call_service(domain, service, data, callback)
-    end,
-    
     refresh_cache = function(self)
       self.entities:clear_cache()
       return self.entities:get_all()

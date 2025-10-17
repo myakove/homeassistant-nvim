@@ -80,18 +80,6 @@ function M:get_services(callback)
   self.ws:get_services(callback)
 end
 
--- Call a service
-function M:call_service(domain, service, data, callback)
-  -- Use websocket's is_connected() instead of self.connected
-  if not self.ws:is_connected() then
-    logger.debug("call_service called but WebSocket not connected yet")
-    if callback then callback("Not connected", nil) end
-    return
-  end
-  
-  self.ws:call_service(domain, service, data, callback)
-end
-
 -- Subscribe to state changes
 function M:subscribe_state_changes(callback)
   if not self.ws:is_connected() then

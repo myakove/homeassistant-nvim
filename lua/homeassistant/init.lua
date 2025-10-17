@@ -49,10 +49,6 @@ function M._register_commands()
     require("homeassistant.ui.state_viewer").show(opts.args)
   end, { nargs = 1, desc = "Show entity state" })
   
-  vim.api.nvim_create_user_command("HAServiceCall", function()
-    require("homeassistant.actions.service_call").prompt()
-  end, { desc = "Call Home Assistant service" })
-  
   vim.api.nvim_create_user_command("HAReloadCache", function()
     M._api:refresh_cache()
     vim.notify("Home Assistant cache reloaded", vim.log.levels.INFO)

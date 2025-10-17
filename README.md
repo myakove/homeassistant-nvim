@@ -231,12 +231,11 @@ export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
 
 ### Commands
 
-- `:HADashboard` - Toggle the entity dashboard
-- `:HAEntityState <entity_id>` - View entity state in floating window
-- `:HAServiceCall` - Interactive service call prompt
-- `:HAPicker` - Open Telescope picker for entity selection
+- `:HADashboard` - Toggle the entity dashboard (readonly view)
+- `:HAEntityState <entity_id>` - View entity state in floating window (readonly)
+- `:HAPicker` - Open Telescope picker for entity selection (readonly)
 - `:HAReloadCache` - Manually reload entity cache
-- `:HAHover` - Show entity info for entity under cursor
+- `:HAHover` - Show entity info for entity under cursor (readonly)
 - `:HADebug` - Show plugin debug information (includes HA version when connected)
 - `:checkhealth homeassistant` - Run health check (verify installation and connection)
 
@@ -338,7 +337,6 @@ self.call_service("climate.")     # All climate entities
 ```lua
 vim.keymap.set("n", "<leader>hd", "<cmd>HADashboard<cr>", { desc = "HA Dashboard" })
 vim.keymap.set("n", "<leader>hp", "<cmd>HAPicker<cr>", { desc = "HA Entity Picker" })
-vim.keymap.set("n", "<leader>hc", "<cmd>HAServiceCall<cr>", { desc = "HA Service Call" })
 vim.keymap.set("n", "<leader>hr", "<cmd>HAReloadCache<cr>", { desc = "HA Reload Cache" })
 ```
 

@@ -449,20 +449,6 @@ function M:get_entity_registry(callback)
   }
 end
 
--- Call service
-function M:call_service(domain, service, service_data, callback)
-  local id = self:_send_message({
-    type = "call_service",
-    domain = domain,
-    service = service,
-    service_data = service_data or {},
-  })
-  
-  self.pending_requests[id] = {
-    callback = callback or function() end,
-  }
-end
-
 -- Handle disconnect
 function M:_handle_disconnect()
   local logger = require("homeassistant.utils.logger")
