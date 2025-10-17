@@ -17,6 +17,10 @@ function M.new(config)
       return self.entities:get_all(callback)
     end,
     
+    get_state = function(self, entity_id, callback)
+      return self.client:get_state(entity_id, callback)
+    end,
+    
     get_services = function(self, callback)
       return self.client:get_services(callback)
     end,
