@@ -71,13 +71,22 @@ end
 
 -- Show hover documentation
 function M.show_hover()
-  if not M.api then return end
+  if not M.api then
+    vim.notify("Home Assistant API not available", vim.log.levels.WARN)
+    return
+  end
   
   local entity_id = M.get_entity_under_cursor()
-  if not entity_id then return end
+  if not entity_id then
+    vim.notify("No entity ID under cursor", vim.log.levels.INFO)
+    return
+  end
   
   M.api:get_states(function(err, entities)
-    if err then return end
+    if err then
+      vim.notify("Failed to fetch entities: " .. tostring(err), vim.log.levels.ERROR)
+      return
+    end
     
     -- Find the entity
     local entity = nil
@@ -88,7 +97,10 @@ function M.show_hover()
       end
     end
     
-    if not entity then return end
+    if not entity then
+      vim.notify("Entity not found: " .. entity_id, vim.log.levels.WARN)
+      return
+    end
     
     -- Create hover content
     local lines = {
