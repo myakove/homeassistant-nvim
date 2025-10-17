@@ -14,8 +14,7 @@ A Neovim plugin for seamless Home Assistant integration using WebSocket API, pro
 ## Requirements
 
 - Neovim >= 0.8.0
-- Python 3
-- **`uv` (REQUIRED)** - Zero-installation dependency management
+- **`uv` (REQUIRED)** - Handles Python and dependencies automatically
 - **Completion engine (pick one):**
   - [blink.cmp](https://github.com/saghen/blink.cmp) - Modern, fast completion (recommended)
   - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) - Popular completion framework
@@ -40,11 +39,12 @@ brew install uv          # macOS
 ```
 
 **Why uv?**
-- ✅ Zero installation - downloads dependencies on-demand
+- ✅ Automatically manages Python and dependencies
+- ✅ Zero installation - downloads everything on-demand
 - ✅ No `pip install` needed
 - ✅ No conflicts with system Python
 - ✅ Fast and reliable
-- ✅ Isolated environments per-project
+- ✅ Works everywhere
 
 ### 2. Install Plugin with lazy.nvim
 
@@ -286,10 +286,9 @@ This plugin uses the official Home Assistant WebSocket API for all communication
 If you're having trouble connecting:
 
 1. **Verify `uv` is installed:** `uv --version`
-2. **Check Python 3 is available:** `python3 --version`
-3. **Verify Home Assistant URL** is correct (including `http://` or `https://`)
-4. **Check your access token** is valid (from HA profile page)
-5. **Enable debug logging:** Set `logging.level = "debug"` in config and check `:messages`
+2. **Verify Home Assistant URL** is correct (including `http://` or `https://`)
+3. **Check your access token** is valid (from HA profile page)
+4. **Enable debug logging:** Set `logging.level = "debug"` in config and check `:messages`
 
 ### uv not found
 

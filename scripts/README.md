@@ -8,10 +8,12 @@ WebSocket client for bidirectional communication with Home Assistant.
 
 ### Usage
 
-**Note:** This script is automatically called by the plugin. You shouldn't need to run it manually.
+**Note:** This script is automatically called by the plugin via `uv`. You shouldn't need to run it manually.
+
+`uv` automatically manages Python and the `websockets` dependency - no manual installation needed.
 
 ```bash
-# The plugin uses uv to run this script with automatic dependency management:
+# The plugin runs:
 uv run --with websockets python3 websocket_client.py <ws_url> <token>
 ```
 

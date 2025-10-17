@@ -25,8 +25,8 @@ communication and updates.
 2. REQUIREMENTS                                  *homeassistant-requirements*
 
 - Neovim >= 0.8.0
-- Python 3
-- uv (REQUIRED) - Install: https://docs.astral.sh/uv/
+- uv (REQUIRED) - Handles Python automatically
+  Install: https://docs.astral.sh/uv/
 - Home Assistant instance with API access
 - Optional: blink.cmp or nvim-cmp for completion
 - Optional: telescope.nvim for entity picker
