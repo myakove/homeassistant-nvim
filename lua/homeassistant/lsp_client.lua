@@ -3,7 +3,6 @@ local M = {}
 
 local logger = require("homeassistant.utils.logger")
 
--- Setup the LSP client
 function M.setup(user_config)
   local init_opts = user_config.lsp.settings or {}
   local cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" }
@@ -40,30 +39,22 @@ function M.setup(user_config)
   return true
 end
 
--- Setup LSP commands for UI integration
 function M._setup_lsp_commands(client, bufnr)
-  -- These commands will be used by UI components
-  -- Commands are executed via vim.lsp.buf.execute_command()
 end
 
--- Execute LSP command helper
 function M.execute_command(command, arguments, callback)
   vim.lsp.buf.execute_command({
     command = command,
     arguments = arguments or {},
   })
   
-  -- LSP commands return via handlers, use callback if needed
   if callback then
-    -- Set up one-time handler for command result
-    -- This is a simplified approach - production would need better handling
     vim.defer_fn(function()
       callback(nil, true)
     end, 100)
   end
 end
 
--- Get LSP client for homeassistant
 function M.get_client()
   local clients = vim.lsp.get_active_clients({ name = "homeassistant" })
   if #clients > 0 then
@@ -72,7 +63,6 @@ function M.get_client()
   return nil
 end
 
--- Check if LSP is connected
 function M.is_connected()
   local client = M.get_client()
   return client ~= nil
