@@ -5,77 +5,54 @@ local M = {}
 
 -- Pick a dashboard to edit
 function M.pick_dashboard()
-  local api = require("homeassistant").get_api()
-  if not api then
-    vim.notify("Home Assistant not initialized", vim.log.levels.ERROR)
+  local lsp_client = require("homeassistant").get_lsp_client()
+  if not lsp_client or not lsp_client.is_connected() then
+    vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
     return
   end
   
   vim.notify("Fetching dashboards...", vim.log.levels.INFO)
   
-  api:get_dashboards(function(err, dashboards)
+  -- Execute LSP command to get dashboards
+  local client = lsp_client.get_client()
+  if not client then
+    vim.notify("LSP client not found", vim.log.levels.ERROR)
+    return
+  end
+  
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.listDashboards",
+    arguments = {},
+  }, function(err, result)
     if err then
-      vim.notify("Failed to fetch dashboards: " .. err, vim.log.levels.ERROR)
+      vim.notify("Failed to fetch dashboards: " .. vim.inspect(err), vim.log.levels.ERROR)
       return
     end
+    
+    if not result or not result.success then
+      vim.notify("Failed to fetch dashboards: " .. (result and result.error or "unknown error"), vim.log.levels.ERROR)
+      return
+    end
+    
+    local dashboards = result.data or {}
     
     if #dashboards == 0 then
       vim.notify("No editable dashboards found (only storage-mode dashboards can be edited)", vim.log.levels.WARN)
       return
     end
     
-    -- Filter out non-editable dashboards by checking their configs
-    M._filter_editable_dashboards(dashboards, function(editable_dashboards)
-      if #editable_dashboards == 0 then
-        vim.notify("No editable Lovelace dashboards found (webpage/auto-managed dashboards excluded)", vim.log.levels.WARN)
-        return
-      end
-      
-      -- Try Telescope first
-      local has_telescope = pcall(require, "telescope.builtin")
-      if has_telescope then
-        M._telescope_picker(editable_dashboards)
-      else
-        M._vim_select_picker(editable_dashboards)
-      end
-    end)
+    -- LSP already filters editable dashboards, use them directly
+    -- Try Telescope first
+    local has_telescope = pcall(require, "telescope.builtin")
+    if has_telescope then
+      M._telescope_picker(dashboards)
+    else
+      M._vim_select_picker(dashboards)
+    end
   end)
 end
 
--- Filter dashboards to only include truly editable Lovelace configs
-function M._filter_editable_dashboards(dashboards, callback)
-  local api = require("homeassistant").get_api()
-  local editable = {}
-  local checked = 0
-  local total = #dashboards
-  
-  if total == 0 then
-    callback(editable)
-    return
-  end
-  
-  for _, dashboard in ipairs(dashboards) do
-    api:get_dashboard_config(dashboard.url_path, function(err, config)
-      checked = checked + 1
-      
-      -- Include dashboard if:
-      -- 1. No error fetching config
-      -- 2. Config has 'views' field (indicates it's a proper Lovelace dashboard)
-      -- 3. Not a simple panel/iframe dashboard
-      if not err and config and type(config) == "table" then
-        -- Check if it's a valid Lovelace config (has views array)
-        if config.views and type(config.views) == "table" then
-          table.insert(editable, dashboard)
-        end
-      end
-      
-      -- When all dashboards are checked, return results
-      if checked == total then
-        callback(editable)
-      end
-    end)
-  end
-end
+-- Note: Filtering is now done by LSP server - it only returns storage-mode dashboards
 
 -- Telescope picker implementation
 function M._telescope_picker(dashboards)
@@ -129,15 +106,35 @@ end
 
 -- Edit a dashboard
 function M.edit_dashboard(dashboard)
-  local api = require("homeassistant").get_api()
-  
+  local lsp_client = require("homeassistant").get_lsp_client()
+  if not lsp_client or not lsp_client.is_connected() then
+    vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
+    return
+  end
+
   vim.notify("Fetching dashboard configuration...", vim.log.levels.INFO)
+
+  local client = lsp_client.get_client()
+  if not client then
+    vim.notify("LSP client not found", vim.log.levels.ERROR)
+    return
+  end
   
-  api:get_dashboard_config(dashboard.url_path, function(err, config)
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.getDashboardConfig",
+    arguments = { dashboard.url_path },
+  }, function(err, result)
     if err then
-      vim.notify("Failed to fetch dashboard config: " .. err, vim.log.levels.ERROR)
+      vim.notify("Failed to fetch dashboard config: " .. vim.inspect(err), vim.log.levels.ERROR)
       return
     end
+    
+    if not result or not result.success then
+      vim.notify("Failed to fetch dashboard config: " .. (result and result.error or "unknown error"), vim.log.levels.ERROR)
+      return
+    end
+    
+    local config = result.data
     
     -- Create new buffer
     local buf = vim.api.nvim_create_buf(true, false)
@@ -221,14 +218,14 @@ function M.edit_dashboard(dashboard)
       string.format("Editing dashboard: %s\nSave with :w to update Home Assistant", dashboard.title or "Default"),
       vim.log.levels.INFO
     )
-  end)
+  end, client.id)
 end
 
 -- Save dashboard back to HA
 function M._save_dashboard(buf)
-  local api = require("homeassistant").get_api()
-  if not api then
-    vim.notify("Home Assistant not initialized", vim.log.levels.ERROR)
+  local lsp_client = require("homeassistant").get_lsp_client()
+  if not lsp_client or not lsp_client.is_connected() then
+    vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
     return
   end
   
@@ -252,14 +249,29 @@ function M._save_dashboard(buf)
   
   -- Save to HA
   vim.notify("Saving dashboard...", vim.log.levels.INFO)
-  api:save_dashboard_config(metadata.url_path, config, function(err, result)
+  
+  local client = lsp_client.get_client()
+  if not client then
+    vim.notify("LSP client not found", vim.log.levels.ERROR)
+    return
+  end
+  
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.saveDashboardConfig",
+    arguments = { metadata.url_path, config },
+  }, function(err, result)
     if err then
-      vim.notify("Failed to save dashboard: " .. tostring(err), vim.log.levels.ERROR)
+      vim.notify("Failed to save dashboard: " .. vim.inspect(err), vim.log.levels.ERROR)
+      return
+    end
+    
+    if not result or not result.success then
+      vim.notify("Failed to save dashboard: " .. (result and result.error or "unknown error"), vim.log.levels.ERROR)
     else
       vim.notify("Dashboard saved successfully!", vim.log.levels.INFO)
       vim.api.nvim_buf_set_option(buf, "modified", false)
     end
-  end)
+  end, client.id)
 end
 
 return M

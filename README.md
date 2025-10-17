@@ -1,143 +1,93 @@
 # homeassistant.nvim
 
-A Neovim plugin for seamless Home Assistant integration using WebSocket API, providing intelligent auto-completion, entity management, and configuration assistance.
+A Neovim plugin for seamless Home Assistant integration via LSP, providing intelligent auto-completion, entity management, and configuration assistance.
 
 ## Features
 
-- 🔌 **WebSocket Connection**: Real-time connection to Home Assistant via official WebSocket API
+- 🚀 **LSP-Based Architecture**: Built on [homeassistant-lsp](https://github.com/myakove/homeassistant-lsp) for robust language server features
 - 🎯 **Smart Auto-completion**: Real-time entity and service completion from your Home Assistant instance
-- 📊 **Live State Viewing**: View and monitor entity states directly in Neovim
+- 💡 **Hover Documentation**: View entity states and details on hover
+- 🔍 **Diagnostics**: Real-time validation of entity IDs and service calls
 - 📝 **Dashboard Editor**: Edit Home Assistant Lovelace dashboards directly from Neovim
+- 📊 **Live State Viewing**: View and monitor entity states directly in Neovim
 - 🎨 **Dashboard**: Quick access to entities in a floating window
-- 🔄 **Real-time Updates**: Auto-updating entity states via WebSocket events
 
 ## Requirements
 
-- Neovim >= 0.8.0
-- **`uv` (REQUIRED)** - Handles Python and dependencies automatically
-- **Completion engine (pick one):**
-  - [blink.cmp](https://github.com/saghen/blink.cmp) - Modern, fast completion (recommended)
-  - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) - Popular completion framework
+- Neovim >= 0.9.0
+- **[homeassistant-lsp](https://github.com/myakove/homeassistant-lsp)** - The LSP server (install globally with npm)
+- **[nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)** - LSP configuration
 - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) (optional) - For entity picker
 - Home Assistant instance with API access
 
 ## Installation
 
-### 1. Install uv (Required)
+### 1. Install homeassistant-lsp (Required)
 
-The plugin uses `uv run --with websockets` to automatically manage Python dependencies on-the-fly. **No manual installation of Python packages needed!**
+The plugin requires the Home Assistant LSP server to be installed globally:
 
-Install uv:
 ```bash
-# Linux/macOS
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Or via package manager
-sudo dnf install uv      # Fedora
-yay -S uv                # Arch
-brew install uv          # macOS
+npm install -g homeassistant-lsp
 ```
 
-**Why uv?**
-- ✅ Automatically manages Python and dependencies
-- ✅ Zero installation - downloads everything on-demand
-- ✅ No `pip install` needed
-- ✅ No conflicts with system Python
-- ✅ Fast and reliable
-- ✅ Works everywhere
+Or see the [homeassistant-lsp installation guide](https://github.com/myakove/homeassistant-lsp#installation) for more options.
 
 ### 2. Install Plugin with lazy.nvim
 
-**With blink.cmp (recommended):**
-
 ```lua
 {
   "myakove/homeassistant-nvim",
   dependencies = {
-    "saghen/blink.cmp", -- optional but recommended
-    "nvim-telescope/telescope.nvim", -- optional
+    "neovim/nvim-lspconfig",          -- Required for LSP
+    "nvim-telescope/telescope.nvim",  -- Optional, for entity picker
   },
   config = function()
     require("homeassistant").setup({
-      homeassistant = {
-        host = "http://homeassistant.local:8123",
-        token = "your_long_lived_access_token_here",
-      },
-    })
-  end,
-}
-
--- Configure blink.cmp sources
-{
-  "saghen/blink.cmp",
-  opts = {
-    sources = {
-      default = { "lsp", "path", "snippets", "buffer", "homeassistant_entities", "homeassistant_services" },
-      providers = {
-        homeassistant_entities = {
-          name = "HomeAssistant",
-          module = "homeassistant.completion.blink_entities",
-          score_offset = 100, -- Higher priority in YAML/Python files
-        },
-        homeassistant_services = {
-          name = "HomeAssistant",
-          module = "homeassistant.completion.blink_services",
-          score_offset = 100, -- Higher priority in YAML/Python files
+      lsp = {
+        enabled = true,
+        -- LSP server command (default: homeassistant-lsp --stdio)
+        cmd = { "homeassistant-lsp", "--stdio" },
+        -- File types to attach LSP to
+        filetypes = { "yaml", "yaml.homeassistant", "python" },
+        -- LSP server settings
+        settings = {
+          homeassistant = {
+            host = "ws://homeassistant.local:8123/api/websocket",
+            token = "your_long_lived_access_token_here",
+            timeout = 5000,
+          },
+          cache = {
+            enabled = true,
+            ttl = 300, -- 5 minutes
+          },
+          diagnostics = {
+            enabled = true,
+            debounce = 500,
+          },
         },
       },
-    },
-  },
-}
-```
-
-**With nvim-cmp:**
-
-```lua
-{
-  "myakove/homeassistant-nvim",
-  dependencies = {
-    "hrsh7th/nvim-cmp",
-    "nvim-telescope/telescope.nvim",
-  },
-  config = function()
-    require("homeassistant").setup({
-      homeassistant = {
-        host = "http://homeassistant.local:8123",
-        token = "your_long_lived_access_token_here",
+      -- Optional: UI settings
+      ui = {
+        dashboard = {
+          width = 0.8,
+          height = 0.8,
+          border = "rounded",
+        },
       },
-    })
-  end,
-}
-
--- Configure nvim-cmp sources
-require("cmp").setup({
-  sources = {
-    { name = "homeassistant_entities" },
-    { name = "homeassistant_services" },
-    -- ... other sources
-  },
-})
-```
-
-### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
-
-```lua
-use {
-  "myakove/homeassistant-nvim",
-  requires = {
-    "hrsh7th/nvim-cmp",
-    "nvim-telescope/telescope.nvim",
-  },
-  config = function()
-    require("homeassistant").setup({
-      homeassistant = {
-        host = "http://homeassistant.local:8123",
-        token = "your_long_lived_access_token_here",
+      -- Optional: Custom keymaps (set to false to disable defaults)
+      keymaps = {
+        dashboard = "<leader>hd",
+        picker = "<leader>hp",
+        reload_cache = "<leader>hr",
+        debug = "<leader>hD",
+        edit_dashboard = "<leader>he",
       },
     })
   end,
 }
 ```
+
+**Note:** Completion is provided by the LSP server and works automatically with any LSP-compatible completion plugin (blink.cmp, nvim-cmp, coq_nvim, etc.). No additional configuration needed!
 
 ## Configuration
 
@@ -148,57 +98,60 @@ All configuration options with their **default values**:
 
 ```lua
 require("homeassistant").setup({
-  homeassistant = {
-    host = "http://localhost:8123",  -- Default: localhost
-    token = nil,                     -- REQUIRED: Your long-lived access token
-    timeout = 5000,                  -- Default: 5000ms
-    verify_ssl = true,               -- Default: true
-  },
-  
-  completion = {
-    enabled = true,                  -- Default: true
-    entity_prefix = "entity:",       -- Default: "entity:"
-    service_prefix = "service:",     -- Default: "service:"
-    auto_trigger = true,             -- Default: true
-  },
-  
+  -- LSP Server configuration
   lsp = {
-    enabled = true,                  -- Default: true - Enable LSP features
-    hover = true,                    -- Default: true - Smart K keymap (HA entity or LSP hover)
-    diagnostics = true,              -- Default: true - Validate entity references
-    go_to_definition = true,         -- Default: true - gd keymap for entities
+    enabled = true,                    -- Default: true - Enable LSP client
+    cmd = { "homeassistant-lsp", "--stdio" }, -- Default: homeassistant-lsp --stdio
+    filetypes = { "yaml", "yaml.homeassistant", "python" }, -- Default file types
+    root_dir = nil,                    -- Default: auto-detect via lspconfig
+    
+    settings = {
+      homeassistant = {
+        host = "ws://localhost:8123/api/websocket", -- WebSocket URL
+        token = nil,                   -- REQUIRED: Your long-lived access token
+        timeout = 5000,                -- Default: 5000ms
+      },
+      cache = {
+        enabled = true,                -- Default: true
+        ttl = 300,                     -- Default: 300 seconds (5 minutes)
+      },
+      diagnostics = {
+        enabled = true,                -- Default: true
+        debounce = 500,                -- Default: 500ms
+      },
+      completion = {
+        minChars = 3,                  -- Default: 3 - Min characters for domain completion
+      },
+    },
   },
   
+  -- UI settings (Neovim-specific)
   ui = {
     dashboard = {
-      width = 0.8,                   -- Default: 0.8 (80% of screen)
-      height = 0.8,                  -- Default: 0.8
-      border = "rounded",            -- Default: "rounded"
-      favorites = {},                -- Default: empty list
+      width = 0.8,                     -- Default: 0.8 (80% of screen)
+      height = 0.8,                    -- Default: 0.8
+      border = "rounded",              -- Default: "rounded"
+      favorites = {},                  -- Default: empty list
     },
     state_viewer = {
-      border = "rounded",            -- Default: "rounded"
-      show_attributes = true,        -- Default: true
+      border = "rounded",              -- Default: "rounded"
+      show_attributes = true,          -- Default: true
     },
   },
   
-  cache = {
-    enabled = true,                  -- Default: true
-    ttl = 300,                       -- Default: 300 seconds (5 minutes)
-    auto_refresh = true,             -- Default: true
-  },
-  
+  -- Logging (plugin-level, not LSP)
   logging = {
-    level = "info",                  -- Default: "info" (debug, info, warn, error)
+    level = "info",                    -- Default: "info" (debug, info, warn, error)
   },
   
+  -- Keymaps
   keymaps = {
-    enabled = true,                  -- Default: true - Set to false to disable all keymaps
-    dashboard = "<leader>hd",        -- Default: <leader>hd - Toggle dashboard
-    picker = "<leader>hp",           -- Default: <leader>hp - Entity picker (requires telescope)
-    edit_dashboard = "<leader>he",   -- Default: <leader>he - Edit HA dashboards
-    reload_cache = "<leader>hr",     -- Default: <leader>hr - Reload cache
-    debug = "<leader>hD",            -- Default: <leader>hD - Show debug info
+    enabled = true,                    -- Default: true - Set to false to disable all keymaps
+    dashboard = "<leader>hd",          -- Default: <leader>hd - Toggle dashboard
+    picker = "<leader>hp",             -- Default: <leader>hp - Entity picker (requires telescope)
+    edit_dashboard = "<leader>he",     -- Default: <leader>he - Edit HA dashboards
+    reload_cache = "<leader>hr",       -- Default: <leader>hr - Reload LSP cache
+    debug = "<leader>hD",              -- Default: <leader>hD - Show debug info
   },
 })
 ```
@@ -229,9 +182,13 @@ For better security, you can use environment variables to avoid hardcoding sensi
 
 ```lua
 require("homeassistant").setup({
-  homeassistant = {
-    host = os.getenv("HOMEASSISTANT_HOST") or "http://localhost:8123",
-    token = os.getenv("HOMEASSISTANT_TOKEN"),  -- Read from environment
+  lsp = {
+    settings = {
+      homeassistant = {
+        host = os.getenv("HOMEASSISTANT_HOST") or "ws://localhost:8123/api/websocket",
+        token = os.getenv("HOMEASSISTANT_TOKEN"),  -- Read from environment
+      },
+    },
   },
 })
 ```
@@ -239,7 +196,7 @@ require("homeassistant").setup({
 Then set in your shell profile (`~/.bashrc` or `~/.zshrc`):
 
 ```bash
-export HOMEASSISTANT_HOST="http://homeassistant.local:8123"
+export HOMEASSISTANT_HOST="ws://homeassistant.local:8123/api/websocket"
 export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
 ```
 
@@ -263,33 +220,34 @@ export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
 - `:HAEntityState <entity_id>` - View entity state in floating window
 - `:HAPicker` - Open Telescope picker for entity selection
 - `:HAEditDashboard` - Edit Home Assistant Lovelace dashboards
-- `:HAReloadCache` - Manually reload entity cache
-- `:HAHover` - Show entity info for entity under cursor
-- `:HADebug` - Show plugin debug information (includes HA version when connected)
-- `:checkhealth homeassistant` - Run health check (verify installation and connection)
+- `:HAReloadCache` - Manually reload LSP entity cache
+- `:HAComplete` - Manually trigger LSP completion
+- `:HADebug` - Show plugin debug information
+- `:checkhealth homeassistant` - Run health check (verify installation and LSP connection)
 
 ### LSP Features
 
-The plugin provides LSP-like features for Home Assistant YAML and Python files:
+The plugin uses a dedicated LSP server ([homeassistant-lsp](https://github.com/myakove/homeassistant-lsp)) that provides full language server features:
 
-**Smart Hover (`K` key):**
-- Press `K` on any entity ID → Shows Home Assistant entity info
-- Press `K` on code → Shows normal LSP hover
-- **Performance:** <1ms when HA disconnected, ~10-50ms when connected (cached)
+**Hover (`K` key):**
+- Press `K` on any entity ID to see entity state and attributes
+- Works in YAML and Python files
 - Shows:
-  - Entity name and domain
-  - Current state
+  - Entity name and current state
   - All attributes
+  - Last changed/updated times
+
+**Completion:**
+- Automatic entity ID completion while typing
+- Service name completion
+- Domain completion
+- Works with any LSP-compatible completion plugin
 
 **Diagnostics:**
-- Automatically validates entity references
-- Shows warnings for unknown/invalid entities
-- Updates on file save
-- **Performance:** Only runs on save, uses cached entities
-
-**Go-to-Definition (`gd` key):**
-- Place cursor on entity ID
-- Press `gd` to open detailed entity view
+- Real-time validation of entity references
+- Warns about unknown/invalid entities
+- Validates service calls
+- Debounced for performance (500ms by default)
 - Falls back to LSP definition for code
 
 **Example:**
@@ -505,19 +463,28 @@ homeassistant-nvim/
 │   ├── init.lua                # Main entry point
 │   ├── config.lua              # Configuration management
 │   ├── health.lua              # Health check integration
-│   ├── api/                    # Home Assistant API client
-│   ├── completion/             # Completion sources (blink.cmp & nvim-cmp)
-│   ├── lsp/                    # LSP features (hover, diagnostics)
-│   ├── ui/                     # UI components (dashboard, picker, editor)
-│   └── utils/                  # Utilities (logger, cache)
-├── scripts/                    # Python helper scripts
-│   └── websocket_client.py     # WebSocket client
+│   ├── lsp_client.lua          # LSP client setup
+│   ├── ui/                     # UI components
+│   │   ├── dashboard.lua       # Entity dashboard
+│   │   ├── dashboard_editor.lua # Lovelace dashboard editor
+│   │   ├── picker.lua          # Telescope entity picker
+│   │   ├── state_viewer.lua    # Entity state viewer
+│   │   └── floating.lua        # Floating window utilities
+│   └── utils/                  # Utilities
+│       └── logger.lua          # Logging utility
 ├── plugin/                     # Vim plugin loader
 ├── doc/                        # Vim help documentation
 └── README.md
 ```
 
+**Note:** The heavy lifting (WebSocket, caching, completion, diagnostics, hover) is done by the separate [homeassistant-lsp](https://github.com/myakove/homeassistant-lsp) server. This plugin focuses on Neovim-specific UI and LSP client integration.
+
+## Related Projects
+
+- [homeassistant-lsp](https://github.com/myakove/homeassistant-lsp) - The LSP server powering this plugin
+
 ## Acknowledgments
 
 - Home Assistant team for the excellent WebSocket API
+- LSP community for the Language Server Protocol specification
 - Neovim community for the powerful plugin ecosystem

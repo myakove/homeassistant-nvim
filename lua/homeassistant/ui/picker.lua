@@ -9,17 +9,35 @@ function M.entities()
     return
   end
   
-  local api = require("homeassistant").get_api()
-  if not api then
-    vim.notify("Home Assistant not initialized", vim.log.levels.ERROR)
+  local lsp_client = require("homeassistant").get_lsp_client()
+  if not lsp_client or not lsp_client.is_connected() then
+    vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
     return
   end
   
-  api:get_states(function(err, entities)
+  local client = lsp_client.get_client()
+  if not client then
+    vim.notify("LSP client not found", vim.log.levels.ERROR)
+    return
+  end
+  
+  vim.notify("Fetching entities...", vim.log.levels.INFO)
+  
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.listEntities",
+    arguments = {},
+  }, function(err, result)
     if err then
-      vim.notify("Failed to fetch entities: " .. err, vim.log.levels.ERROR)
+      vim.notify("Failed to fetch entities: " .. vim.inspect(err), vim.log.levels.ERROR)
       return
     end
+    
+    if not result or not result.success then
+      vim.notify("Failed to fetch entities: " .. (result and result.error or "unknown error"), vim.log.levels.ERROR)
+      return
+    end
+    
+    local entities = result.data or {}
     
     local pickers = require("telescope.pickers")
     local finders = require("telescope.finders")
@@ -49,7 +67,7 @@ function M.entities()
         return true
       end,
     }):find()
-  end)
+  end, client.id)
 end
 
 return M
