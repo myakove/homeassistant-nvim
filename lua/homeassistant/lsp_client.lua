@@ -5,76 +5,39 @@ local logger = require("homeassistant.utils.logger")
 
 -- Setup the LSP client
 function M.setup(user_config)
-  -- Check if lspconfig is available
-  local ok, lspconfig = pcall(require, "lspconfig")
-  if not ok then
-    logger.warn("nvim-lspconfig not found. LSP features disabled.")
-    logger.info("Install with: lazy = { 'neovim/nvim-lspconfig' }")
-    return false
-  end
-  
-  local configs = require("lspconfig.configs")
-  local util = require("lspconfig.util")
-  
-  -- Define the homeassistant LSP server
-  if not configs.homeassistant then
-    configs.homeassistant = {
-      default_config = {
-        cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" },
-        filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python" },
-        root_dir = user_config.lsp.root_dir or function(fname)
-          return util.root_pattern(".git", "configuration.yaml")(fname) or util.path.dirname(fname)
-        end,
-        settings = user_config.lsp.settings or {},
-        single_file_support = true,
-      },
-    }
-  end
-  
-  -- Setup the server
   local init_opts = user_config.lsp.settings or {}
+  local cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" }
+  local filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python" }
   
-  lspconfig.homeassistant.setup({
-    cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" },
-    filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python" },
-    init_options = init_opts,  -- Pass settings as init_options
+  -- Register homeassistant LSP using native Neovim API with REAL filetypes
+  vim.lsp.config('homeassistant', {
+    cmd = cmd,
+    filetypes = filetypes,
+    root_dir = vim.fn.getcwd(),
+    init_options = init_opts,
     on_attach = function(client, bufnr)
-      -- Setup custom commands that UI components will use
       M._setup_lsp_commands(client, bufnr)
-    end,
-    on_init = function(client, initialize_result)
-      logger.info("Home Assistant LSP initialized")
     end,
     capabilities = vim.lsp.protocol.make_client_capabilities(),
   })
   
-  -- Start LSP immediately in a scratch buffer so it's available right away
-  vim.defer_fn(function()
-    -- Create a temporary scratch buffer
-    local scratch_buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(scratch_buf, 'filetype', 'yaml')
+  vim.lsp.enable('homeassistant')
+  
+  -- Create hidden keepalive buffer to start LSP immediately on Neovim launch
+  vim.schedule(function()
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_name(buf, 'homeassistant-keepalive.yaml')
+    vim.bo[buf].bufhidden = 'hide'
+    vim.bo[buf].filetype = 'yaml' -- Use real filetype
     
-    -- Start the LSP client attached to this buffer
+    -- Start LSP on keepalive buffer
     vim.lsp.start({
       name = 'homeassistant',
-      cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" },
+      cmd = cmd,
       root_dir = vim.fn.getcwd(),
       init_options = init_opts,
-    }, {
-      bufnr = scratch_buf,
-      reuse_client = function(client, config)
-        -- Reuse if same name
-        return client.name == config.name
-      end,
-    })
-    
-    -- Delete the scratch buffer after LSP starts
-    vim.defer_fn(function()
-      if vim.api.nvim_buf_is_valid(scratch_buf) then
-        vim.api.nvim_buf_delete(scratch_buf, { force = true })
-      end
-    end, 100)
-  end, 100)
+    }, { bufnr = buf })
+  end)
   
   return true
 end
