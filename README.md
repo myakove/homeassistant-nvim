@@ -195,6 +195,30 @@ require("homeassistant").setup({
 ```
 </details>
 
+### Using Environment Variables
+
+For better security, you can use environment variables to avoid hardcoding sensitive tokens in your config:
+
+```lua
+require("homeassistant").setup({
+  homeassistant = {
+    host = os.getenv("HOMEASSISTANT_HOST") or "http://localhost:8123",
+    token = os.getenv("HOMEASSISTANT_TOKEN"),  -- Read from environment
+  },
+})
+```
+
+Then set in your shell profile (`~/.bashrc` or `~/.zshrc`):
+
+```bash
+export HOMEASSISTANT_HOST="http://homeassistant.local:8123"
+export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
+```
+
+**Benefits:**
+- ✅ Tokens not stored in config files or git repos
+- ✅ Easy to switch between dev/prod environments
+
 ## Usage
 
 ### Getting a Long-Lived Access Token
