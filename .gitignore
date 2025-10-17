@@ -1,0 +1,50 @@
+# Neovim
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Test files
+.tests/
+test_*.lua
+test_*.py
+*_test.lua
+*_test.py
+
+# Internal project docs (not for users)
+PROJECT.md
+STATUS.md
+TESTING.md
+DEPENDENCIES.md
+WHY_NOT_PURE_LUA.md
+CLEANUP_SUMMARY.md
+
+# Editor directories
+.vscode/
+.idea/
+.cursor/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lua compiled files
+*.luac
+
+# Cache
+.cache/
+
+# Documentation generated files
+doc/tags
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+*.pyc
+.pytest_cache/

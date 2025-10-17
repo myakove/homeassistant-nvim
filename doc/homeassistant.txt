@@ -1,0 +1,118 @@
+*homeassistant.txt*  Home Assistant integration for Neovim
+
+==============================================================================
+CONTENTS                                          *homeassistant-contents*
+
+    1. Introduction .................. |homeassistant-introduction|
+    2. Requirements .................. |homeassistant-requirements|
+    3. Installation .................. |homeassistant-installation|
+    4. Configuration ................. |homeassistant-configuration|
+    5. Commands ...................... |homeassistant-commands|
+    6. Functions ..................... |homeassistant-functions|
+    7. License ....................... |homeassistant-license|
+
+==============================================================================
+1. INTRODUCTION                                  *homeassistant-introduction*
+
+homeassistant.nvim provides seamless integration with Home Assistant,
+offering auto-completion, entity management, and real-time state monitoring
+directly in Neovim.
+
+This plugin uses the official Home Assistant WebSocket API for real-time
+communication and updates.
+
+==============================================================================
+2. REQUIREMENTS                                  *homeassistant-requirements*
+
+- Neovim >= 0.8.0
+- Python 3 with websockets library (pip install websockets)
+- Home Assistant instance with API access
+- Optional: nvim-cmp for completion
+- Optional: telescope.nvim for entity picker
+
+==============================================================================
+3. INSTALLATION                                  *homeassistant-installation*
+
+Using lazy.nvim:
+>lua
+    {
+      "yourusername/homeassistant.nvim",
+      config = function()
+        require("homeassistant").setup({
+          homeassistant = {
+            host = "http://homeassistant.local:8123",
+            token = "your_token_here",
+          },
+        })
+      end,
+    }
+<
+
+==============================================================================
+4. CONFIGURATION                                *homeassistant-configuration*
+
+Full configuration options:
+>lua
+    require("homeassistant").setup({
+      homeassistant = {
+        host = "http://localhost:8123",
+        token = nil, -- Required
+        timeout = 5000,
+      },
+      completion = {
+        enabled = true,
+        auto_trigger = true,
+      },
+      ui = {
+        dashboard = {
+          width = 0.8,
+          height = 0.8,
+          border = "rounded",
+        },
+      },
+      cache = {
+        enabled = true,
+        ttl = 300,
+      },
+      logging = {
+        level = "info",
+      },
+    })
+<
+
+==============================================================================
+5. COMMANDS                                        *homeassistant-commands*
+
+:HADashboard                                              *:HADashboard*
+    Toggle the Home Assistant entity dashboard
+
+:HAEntityState {entity_id}                              *:HAEntityState*
+    View detailed state information for a specific entity
+
+:HAServiceCall                                          *:HAServiceCall*
+    Interactively call a Home Assistant service
+
+:HAPicker                                                    *:HAPicker*
+    Open Telescope picker for entity selection (requires telescope.nvim)
+
+:HAReloadCache                                          *:HAReloadCache*
+    Manually reload the entity cache from Home Assistant
+
+==============================================================================
+6. FUNCTIONS                                        *homeassistant-functions*
+
+require("homeassistant").setup({config})         *homeassistant.setup()*
+    Initialize the plugin with configuration
+
+require("homeassistant").get_api()              *homeassistant.get_api()*
+    Get the API client instance for direct API calls
+
+==============================================================================
+7. LICENSE                                            *homeassistant-license*
+
+MIT License
+
+Copyright (c) 2025 homeassistant.nvim contributors
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
