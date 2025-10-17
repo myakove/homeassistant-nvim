@@ -120,8 +120,31 @@ function M._register_commands()
       
       -- Check if connected (safely)
       if M._api and M._api.client then
-        local connected = pcall(function() return M._api.client:is_connected() end)
+        local connected = M._api.client:is_connected()
         table.insert(info, "WebSocket connected: " .. tostring(connected))
+        
+        -- If connected, get HA version info
+        if connected then
+          M._api.client.ws:get_config(function(err, cfg)
+            if not err and cfg then
+              -- Cache HA config for health check
+              local cache = require("homeassistant.utils.cache")
+              cache.set("ha_config", cfg, 3600)  -- Cache for 1 hour
+              
+              table.insert(info, "")
+              table.insert(info, "=== Home Assistant Info ===")
+              table.insert(info, "Version: " .. (cfg.version or "unknown"))
+              table.insert(info, "Location: " .. (cfg.location_name or "unknown"))
+              table.insert(info, "State: " .. (cfg.state or "unknown"))
+              table.insert(info, "Time zone: " .. (cfg.time_zone or "unknown"))
+              
+              vim.notify(table.concat(info, "\n"), vim.log.levels.INFO)
+            else
+              vim.notify(table.concat(info, "\n"), vim.log.levels.INFO)
+            end
+          end)
+          return  -- Wait for async response
+        end
       else
         table.insert(info, "WebSocket connected: false")
       end

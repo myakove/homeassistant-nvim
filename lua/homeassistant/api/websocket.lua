@@ -310,7 +310,48 @@ function M:get_states(callback)
     if callback then
       callback("Failed to send message", nil)
     end
+    return
   end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if callback then
+        callback(err, result)
+      end
+    end,
+  }
+end
+
+-- Get HA config (version, location, etc.)
+function M:get_config(callback)
+  local logger = require("homeassistant.utils.logger")
+  
+  if self.state ~= STATE.CONNECTED then
+    if callback then
+      callback("Not connected", nil)
+    end
+    return
+  end
+  
+  local id = self:_send_message({
+    type = "get_config",
+  })
+  
+  if not id then
+    logger.error("Failed to send get_config message")
+    if callback then
+      callback("Failed to send message", nil)
+    end
+    return
+  end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if callback then
+        callback(err, result)
+      end
+    end,
+  }
 end
 
 -- Get services

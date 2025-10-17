@@ -141,57 +141,55 @@ use {
 
 ## Configuration
 
+All configuration options with their **default values**:
+
 <details>
 <summary>Full Configuration Example</summary>
 
 ```lua
 require("homeassistant").setup({
   homeassistant = {
-    host = "http://localhost:8123",
-    token = nil, -- REQUIRED: Your long-lived access token
-    timeout = 5000,
-    verify_ssl = true,
+    host = "http://localhost:8123",  -- Default: localhost
+    token = nil,                     -- REQUIRED: Your long-lived access token
+    timeout = 5000,                  -- Default: 5000ms
+    verify_ssl = true,               -- Default: true
   },
   
   completion = {
-    enabled = true,
-    entity_prefix = "entity:",
-    service_prefix = "service:",
-    auto_trigger = true,
+    enabled = true,                  -- Default: true
+    entity_prefix = "entity:",       -- Default: "entity:"
+    service_prefix = "service:",     -- Default: "service:"
+    auto_trigger = true,             -- Default: true
   },
   
   lsp = {
-    enabled = true, -- Enable LSP features
-    hover = true, -- Press K to show entity info
-    diagnostics = true, -- Show warnings for unknown entities
-    go_to_definition = true, -- Press gd to view entity details
+    enabled = true,                  -- Default: true - Enable LSP features
+    hover = true,                    -- Default: true - Smart K keymap (HA entity or LSP hover)
+    diagnostics = true,              -- Default: true - Validate entity references
+    go_to_definition = true,         -- Default: true - gd keymap for entities
   },
   
   ui = {
     dashboard = {
-      width = 0.8,
-      height = 0.8,
-      border = "rounded",
-      favorites = {
-        "light.living_room",
-        "climate.thermostat",
-        "sensor.temperature",
-      },
+      width = 0.8,                   -- Default: 0.8 (80% of screen)
+      height = 0.8,                  -- Default: 0.8
+      border = "rounded",            -- Default: "rounded"
+      favorites = {},                -- Default: empty list
     },
     state_viewer = {
-      border = "rounded",
-      show_attributes = true,
+      border = "rounded",            -- Default: "rounded"
+      show_attributes = true,        -- Default: true
     },
   },
   
   cache = {
-    enabled = true,
-    ttl = 300, -- 5 minutes
-    auto_refresh = true,
+    enabled = true,                  -- Default: true
+    ttl = 300,                       -- Default: 300 seconds (5 minutes)
+    auto_refresh = true,             -- Default: true
   },
   
   logging = {
-    level = "info", -- debug, info, warn, error
+    level = "info",                  -- Default: "info" (debug, info, warn, error)
   },
 })
 ```
@@ -215,31 +213,32 @@ require("homeassistant").setup({
 - `:HAPicker` - Open Telescope picker for entity selection
 - `:HAReloadCache` - Manually reload entity cache
 - `:HAHover` - Show entity info for entity under cursor
-- `:HADebug` - Show plugin debug information
+- `:HADebug` - Show plugin debug information (includes HA version when connected)
+- `:checkhealth homeassistant` - Run health check (verify installation and connection)
 
 ### LSP Features
 
 The plugin provides LSP-like features for Home Assistant YAML and Python files:
 
-**Hover Documentation (`:HAHover`):**
-- Place cursor on any entity ID (e.g., `sensor.temperature`)
-- Run `:HAHover` to see:
+**Smart Hover (`K` key):**
+- Press `K` on any entity ID → Shows Home Assistant entity info
+- Press `K` on code → Shows normal LSP hover
+- **Performance:** <1ms when HA disconnected, ~10-50ms when connected (cached)
+- Shows:
   - Entity name and domain
   - Current state
   - All attributes
-- **Tip:** Map to a key in your config:
-  ```lua
-  vim.keymap.set("n", "<leader>hh", "<cmd>HAHover<cr>", { desc = "HA Entity Info" })
-  ```
 
 **Diagnostics:**
 - Automatically validates entity references
 - Shows warnings for unknown/invalid entities
 - Updates on file save
+- **Performance:** Only runs on save, uses cached entities
 
-**Go-to-Definition (gd):**
+**Go-to-Definition (`gd` key):**
 - Place cursor on entity ID
 - Press `gd` to open detailed entity view
+- Falls back to LSP definition for code
 
 **Example:**
 ```yaml
@@ -247,12 +246,15 @@ automation:
   - alias: "Turn on lights"
     trigger:
       - platform: state
-        entity_id: sensor.motion  # :HAHover here for info
+        entity_id: sensor.motion  # Press K here for HA info
     action:
       - service: light.turn_on
         target:
           entity_id: light.unknown  # Warning: Unknown entity
 ```
+
+**Manual Command:**
+- `:HAHover` - Force show HA entity info (bypasses LSP fallback)
 
 ### Auto-completion
 
@@ -327,14 +329,33 @@ This plugin uses the official Home Assistant WebSocket API for all communication
 
 ## Troubleshooting
 
+### Health Check (Recommended First Step)
+
+Run the health check to verify your setup:
+```vim
+:checkhealth homeassistant
+```
+
+This will check:
+- ✅ uv installation and version
+- ✅ Python 3 availability
+- ✅ Plugin initialization
+- ✅ WebSocket connection status
+- ✅ Home Assistant version, location, and state
+- ✅ Total entities and services
+- ✅ Completion engine detection
+- ✅ Optional dependencies (telescope.nvim)
+
 ### Connection Issues
 
 If you're having trouble connecting:
 
-1. **Verify `uv` is installed:** `uv --version`
-2. **Verify Home Assistant URL** is correct (including `http://` or `https://`)
-3. **Check your access token** is valid (from HA profile page)
-4. **Enable debug logging:** Set `logging.level = "debug"` in config and check `:messages`
+1. **Run health check:** `:checkhealth homeassistant`
+2. **Verify `uv` is installed:** `uv --version`
+3. **Verify Home Assistant URL** is correct (including `http://` or `https://`)
+4. **Check your access token** is valid (from HA profile page)
+5. **Check plugin debug info:** `:HADebug` (shows HA version when connected)
+6. **Enable debug logging:** Set `logging.level = "debug"` in config and check `:messages`
 
 ### uv not found
 

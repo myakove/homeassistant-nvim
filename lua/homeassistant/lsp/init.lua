@@ -19,6 +19,30 @@ function M.setup(api, config)
     })
   end
   
+  -- Setup smart hover that tries HA first, then falls back to LSP
+  if M.config.hover ~= false then
+    -- Override K keymap for yaml/python files
+    -- Use multiple events to ensure we override LazyVim's keymap
+    vim.api.nvim_create_autocmd({"FileType", "LspAttach", "BufEnter"}, {
+      pattern = {"*.yaml", "*.yml", "*.py", "yaml", "python"},
+      callback = function(args)
+        local bufnr = args.buf
+        local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+        
+        if ft == "yaml" or ft == "python" then
+          -- Delay to ensure we run after LazyVim sets its keymaps
+          vim.defer_fn(function()
+            if vim.api.nvim_buf_is_valid(bufnr) then
+              vim.keymap.set("n", "K", function()
+                M.smart_hover()
+              end, { buffer = bufnr, desc = "HA hover (or LSP)", silent = true })
+            end
+          end, 100)  -- 100ms delay
+        end
+      end,
+    })
+  end
+  
   -- Add go-to-definition keymap
   if M.config.go_to_definition ~= false then
     vim.api.nvim_create_autocmd("FileType", {
@@ -55,6 +79,21 @@ function M.get_entity_under_cursor()
   end
   
   return nil
+end
+
+-- Smart hover: Try HA entity first, fall back to LSP
+function M.smart_hover()
+  -- Quick check: Is there an entity under cursor?
+  local entity_id = M.get_entity_under_cursor()
+  
+  -- No entity detected or HA not connected → use LSP hover
+  if not entity_id or not M.api or not M.api.client or not M.api.client:is_connected() then
+    vim.lsp.buf.hover()
+    return
+  end
+  
+  -- Entity detected and HA connected → show HA info
+  M.show_hover()
 end
 
 -- Show hover documentation

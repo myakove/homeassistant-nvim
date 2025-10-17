@@ -94,7 +94,7 @@ end
 
 -- Subscribe to state changes
 function M:subscribe_state_changes(callback)
-  if not self.connected then
+  if not self.ws:is_connected() then
     logger.error("Not connected to Home Assistant")
     return
   end
@@ -104,7 +104,7 @@ end
 
 -- Test connection
 function M:test_connection(callback)
-  if self.connected then
+  if self.ws:is_connected() then
     callback(true, "Connected")
   else
     callback(false, "Not connected")
@@ -116,12 +116,11 @@ function M:disconnect()
   if self.ws then
     self.ws:disconnect()
   end
-  self.connected = false
 end
 
 -- Check if connected
 function M:is_connected()
-  return self.connected and self.ws:is_connected()
+  return self.ws and self.ws:is_connected()
 end
 
 return M
