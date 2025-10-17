@@ -25,6 +25,13 @@ function M.setup(user_config)
   -- Setup completion sources
   require("homeassistant.completion").setup(M._api)
   
+  -- Setup LSP features (if enabled in config)
+  local user_cfg = config.get()
+  if user_cfg.lsp and user_cfg.lsp.enabled ~= false then
+    require("homeassistant.lsp").setup(M._api, user_cfg.lsp)
+    require("homeassistant.utils.logger").debug("LSP features enabled")
+  end
+  
   -- Register commands
   M._register_commands()
   
@@ -87,6 +94,15 @@ function M._register_commands()
       end
     end
   end, { desc = "Manually trigger Home Assistant completion" })
+  
+  vim.api.nvim_create_user_command("HAHover", function()
+    -- Show entity info for entity under cursor
+    if M._api then
+      require("homeassistant.lsp").show_hover()
+    else
+      vim.notify("Home Assistant not initialized", vim.log.levels.ERROR)
+    end
+  end, { desc = "Show Home Assistant entity info under cursor" })
   
   vim.api.nvim_create_user_command("HADebug", function()
     -- Debug information (wrapped in pcall to prevent crashes)

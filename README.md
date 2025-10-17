@@ -160,6 +160,13 @@ require("homeassistant").setup({
     auto_trigger = true,
   },
   
+  lsp = {
+    enabled = true, -- Enable LSP features
+    hover = true, -- Press K to show entity info
+    diagnostics = true, -- Show warnings for unknown entities
+    go_to_definition = true, -- Press gd to view entity details
+  },
+  
   ui = {
     dashboard = {
       width = 0.8,
@@ -207,6 +214,45 @@ require("homeassistant").setup({
 - `:HAServiceCall` - Interactive service call prompt
 - `:HAPicker` - Open Telescope picker for entity selection
 - `:HAReloadCache` - Manually reload entity cache
+- `:HAHover` - Show entity info for entity under cursor
+- `:HADebug` - Show plugin debug information
+
+### LSP Features
+
+The plugin provides LSP-like features for Home Assistant YAML and Python files:
+
+**Hover Documentation (`:HAHover`):**
+- Place cursor on any entity ID (e.g., `sensor.temperature`)
+- Run `:HAHover` to see:
+  - Entity name and domain
+  - Current state
+  - All attributes
+- **Tip:** Map to a key in your config:
+  ```lua
+  vim.keymap.set("n", "<leader>hh", "<cmd>HAHover<cr>", { desc = "HA Entity Info" })
+  ```
+
+**Diagnostics:**
+- Automatically validates entity references
+- Shows warnings for unknown/invalid entities
+- Updates on file save
+
+**Go-to-Definition (gd):**
+- Place cursor on entity ID
+- Press `gd` to open detailed entity view
+
+**Example:**
+```yaml
+automation:
+  - alias: "Turn on lights"
+    trigger:
+      - platform: state
+        entity_id: sensor.motion  # :HAHover here for info
+    action:
+      - service: light.turn_on
+        target:
+          entity_id: light.unknown  # Warning: Unknown entity
+```
 
 ### Auto-completion
 
@@ -306,11 +352,11 @@ Make sure `~/.cargo/bin` is in your `$PATH` (or restart your terminal after inst
 - [x] Service auto-completion
 - [x] Dashboard UI
 - [x] Real-time state updates
-- [ ] YAML validation and diagnostics
+- [x] LSP features (hover, diagnostics, go-to-definition)
 - [ ] Snippet generation for automations
 - [ ] Blueprint editor support
 - [ ] State history visualization
-- [ ] Integration with LSP for better YAML support
+- [ ] Advanced YAML validation
 
 ## Contributing
 

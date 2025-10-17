@@ -19,6 +19,14 @@ local defaults = {
     auto_trigger = true, -- Auto-trigger on typing
   },
   
+  -- LSP features
+  lsp = {
+    enabled = true, -- Enable LSP-like features
+    hover = true, -- Show entity info on hover (CursorHold)
+    diagnostics = true, -- Validate entity references and show warnings
+    go_to_definition = true, -- Enable gd keymap to jump to entity info
+  },
+  
   -- UI settings
   ui = {
     dashboard = {
