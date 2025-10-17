@@ -214,17 +214,23 @@ require("homeassistant").setup({
 - `:HAServiceCall` - Interactive service call prompt
 - `:HAPicker` - Open Telescope picker for entity selection
 - `:HAReloadCache` - Manually reload entity cache
+- `:HAHover` - Show entity info for entity under cursor
+- `:HADebug` - Show plugin debug information
 
 ### LSP Features
 
 The plugin provides LSP-like features for Home Assistant YAML and Python files:
 
-**Hover Documentation (K):**
+**Hover Documentation (`:HAHover`):**
 - Place cursor on any entity ID (e.g., `sensor.temperature`)
-- Press `K` to see:
+- Run `:HAHover` to see:
   - Entity name and domain
   - Current state
   - All attributes
+- **Tip:** Map to a key in your config:
+  ```lua
+  vim.keymap.set("n", "<leader>hh", "<cmd>HAHover<cr>", { desc = "HA Entity Info" })
+  ```
 
 **Diagnostics:**
 - Automatically validates entity references
@@ -241,7 +247,7 @@ automation:
   - alias: "Turn on lights"
     trigger:
       - platform: state
-        entity_id: sensor.motion  # Press K here for info
+        entity_id: sensor.motion  # :HAHover here for info
     action:
       - service: light.turn_on
         target:

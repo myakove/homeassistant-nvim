@@ -95,6 +95,15 @@ function M._register_commands()
     end
   end, { desc = "Manually trigger Home Assistant completion" })
   
+  vim.api.nvim_create_user_command("HAHover", function()
+    -- Show entity info for entity under cursor
+    if M._api then
+      require("homeassistant.lsp").show_hover()
+    else
+      vim.notify("Home Assistant not initialized", vim.log.levels.ERROR)
+    end
+  end, { desc = "Show Home Assistant entity info under cursor" })
+  
   vim.api.nvim_create_user_command("HADebug", function()
     -- Debug information (wrapped in pcall to prevent crashes)
     local ok, err = pcall(function()
