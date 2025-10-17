@@ -1,42 +1,6 @@
 -- Configuration management
 local M = {}
 
--- Helper function to read environment variable
-local function get_env(name)
-  local value = vim.fn.getenv(name)
-  if value ~= vim.NIL and value ~= "" then
-    return value
-  end
-  return nil
-end
-
--- Helper function to convert string to boolean
-local function to_boolean(value)
-  if type(value) == "boolean" then
-    return value
-  end
-  if type(value) == "string" then
-    local lower = value:lower()
-    if lower == "true" or lower == "1" or lower == "yes" then
-      return true
-    elseif lower == "false" or lower == "0" or lower == "no" then
-      return false
-    end
-  end
-  return nil
-end
-
--- Helper function to convert string to number
-local function to_number(value)
-  if type(value) == "number" then
-    return value
-  end
-  if type(value) == "string" then
-    return tonumber(value)
-  end
-  return nil
-end
-
 -- Default configuration
 local defaults = {
   -- Home Assistant connection settings
@@ -99,65 +63,14 @@ local defaults = {
 
 local config = vim.deepcopy(defaults)
 
--- Load configuration from environment variables
-local function load_from_env()
-  local env_config = {
-    homeassistant = {},
-  }
-  
-  -- Read environment variables (HOMEASSISTANT_ prefix)
-  local host = get_env("HOMEASSISTANT_HOST")
-  if host then
-    env_config.homeassistant.host = host
-  end
-  
-  local token = get_env("HOMEASSISTANT_TOKEN")
-  if token then
-    env_config.homeassistant.token = token
-  end
-  
-  local timeout = get_env("HOMEASSISTANT_TIMEOUT")
-  if timeout then
-    local timeout_num = to_number(timeout)
-    if timeout_num then
-      env_config.homeassistant.timeout = timeout_num
-    end
-  end
-  
-  local verify_ssl = get_env("HOMEASSISTANT_VERIFY_SSL")
-  if verify_ssl then
-    local verify_bool = to_boolean(verify_ssl)
-    if verify_bool ~= nil then
-      env_config.homeassistant.verify_ssl = verify_bool
-    end
-  end
-  
-  return env_config
-end
-
 -- Setup configuration with user overrides
 function M.setup(user_config)
-  -- Priority: user_config > environment variables > defaults
-  -- 1. Start with defaults
-  local merged = vim.deepcopy(defaults)
-  
-  -- 2. Apply environment variables
-  local env_config = load_from_env()
-  merged = vim.tbl_deep_extend("force", merged, env_config)
-  
-  -- 3. Apply user config (highest priority)
-  if user_config then
-    merged = vim.tbl_deep_extend("force", merged, user_config)
-  end
-  
-  config = merged
+  config = vim.tbl_deep_extend("force", defaults, user_config or {})
   
   -- Validate required fields
   if not config.homeassistant.token then
     vim.notify(
-      "Home Assistant token not configured. Please set:\n" ..
-      "1. homeassistant.token in setup(), OR\n" ..
-      "2. HOMEASSISTANT_TOKEN environment variable",
+      "Home Assistant token not configured. Please set homeassistant.token in setup()",
       vim.log.levels.WARN
     )
   end
