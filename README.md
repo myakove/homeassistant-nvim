@@ -7,7 +7,7 @@ A Neovim plugin for seamless Home Assistant integration using WebSocket API, pro
 - 🔌 **WebSocket Connection**: Real-time connection to Home Assistant via official WebSocket API
 - 🎯 **Smart Auto-completion**: Real-time entity and service completion from your Home Assistant instance
 - 📊 **Live State Viewing**: View and monitor entity states directly in Neovim
-- ⚡ **Quick Actions**: Control entities and call services without leaving your editor
+- 📝 **Dashboard Editor**: Edit Home Assistant Lovelace dashboards directly from Neovim
 - 🎨 **Dashboard**: Quick access to entities in a floating window
 - 🔄 **Real-time Updates**: Auto-updating entity states via WebSocket events
 
@@ -504,10 +504,11 @@ homeassistant-nvim/
 ├── lua/homeassistant/          # Lua plugin code
 │   ├── init.lua                # Main entry point
 │   ├── config.lua              # Configuration management
+│   ├── health.lua              # Health check integration
 │   ├── api/                    # Home Assistant API client
-│   ├── completion/             # nvim-cmp sources
-│   ├── ui/                     # UI components
-│   ├── actions/                # Service calls and actions
+│   ├── completion/             # Completion sources (blink.cmp & nvim-cmp)
+│   ├── lsp/                    # LSP features (hover, diagnostics)
+│   ├── ui/                     # UI components (dashboard, picker, editor)
 │   └── utils/                  # Utilities (logger, cache)
 ├── scripts/                    # Python helper scripts
 │   └── websocket_client.py     # WebSocket client
