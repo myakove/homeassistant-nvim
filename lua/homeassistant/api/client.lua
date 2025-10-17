@@ -111,4 +111,37 @@ function M:is_connected()
   return self.ws and self.ws:is_connected()
 end
 
+-- Get list of editable dashboards
+function M:get_dashboards(callback)
+  if not self.ws:is_connected() then
+    logger.debug("get_dashboards called but WebSocket not connected yet")
+    if callback then callback("Not connected", nil) end
+    return
+  end
+  
+  self.ws:get_dashboards(callback)
+end
+
+-- Get dashboard configuration
+function M:get_dashboard_config(url_path, callback)
+  if not self.ws:is_connected() then
+    logger.debug("get_dashboard_config called but WebSocket not connected yet")
+    if callback then callback("Not connected", nil) end
+    return
+  end
+  
+  self.ws:get_dashboard_config(url_path, callback)
+end
+
+-- Save dashboard configuration
+function M:save_dashboard_config(url_path, config, callback)
+  if not self.ws:is_connected() then
+    logger.debug("save_dashboard_config called but WebSocket not connected yet")
+    if callback then callback("Not connected", nil) end
+    return
+  end
+  
+  self.ws:save_dashboard_config(url_path, config, callback)
+end
+
 return M

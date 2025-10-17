@@ -448,6 +448,128 @@ function M:get_entity_registry(callback)
   }
 end
 
+-- Get list of Lovelace dashboards (storage mode only)
+function M:get_dashboards(callback)
+  local logger = require("homeassistant.utils.logger")
+  
+  if self.state ~= STATE.CONNECTED then
+    if callback then
+      callback("Not connected", nil)
+    end
+    return
+  end
+  
+  local id = self:_send_message({
+    type = "lovelace/dashboards/list",
+  })
+  
+  if not id then
+    logger.error("Failed to send get_dashboards message")
+    if callback then
+      callback("Failed to send message", nil)
+    end
+    return
+  end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if err then
+        if callback then callback(err, nil) end
+        return
+      end
+      
+      -- Filter to only storage mode dashboards (editable via API)
+      local editable = {}
+      for _, dashboard in ipairs(result or {}) do
+        if dashboard.mode == "storage" then
+          table.insert(editable, dashboard)
+        end
+      end
+      
+      if callback then
+        callback(nil, editable)
+      end
+    end,
+  }
+end
+
+-- Get Lovelace dashboard configuration
+function M:get_dashboard_config(url_path, callback)
+  local logger = require("homeassistant.utils.logger")
+  
+  if self.state ~= STATE.CONNECTED then
+    if callback then
+      callback("Not connected", nil)
+    end
+    return
+  end
+  
+  local message = {
+    type = "lovelace/config",
+  }
+  
+  if url_path then
+    message.url_path = url_path
+  end
+  
+  local id = self:_send_message(message)
+  
+  if not id then
+    logger.error("Failed to send get_dashboard_config message")
+    if callback then
+      callback("Failed to send message", nil)
+    end
+    return
+  end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if callback then
+        callback(err, result)
+      end
+    end,
+  }
+end
+
+-- Save Lovelace dashboard configuration
+function M:save_dashboard_config(url_path, config, callback)
+  local logger = require("homeassistant.utils.logger")
+  
+  if self.state ~= STATE.CONNECTED then
+    if callback then
+      callback("Not connected", nil)
+    end
+    return
+  end
+  
+  local message = {
+    type = "lovelace/config/save",
+    config = config,
+  }
+  
+  if url_path then
+    message.url_path = url_path
+  end
+  
+  local id = self:_send_message(message)
+  
+  if not id then
+    logger.error("Failed to send save_dashboard_config message")
+    if callback then
+      callback("Failed to send message", nil)
+    end
+    return
+  end
+  
+  self.pending_requests[id] = {
+    callback = function(err, result)
+      if callback then
+        callback(err, result)
+      end
+    end,
+  }
+end
+
 -- Handle disconnect
 function M:_handle_disconnect()
   local logger = require("homeassistant.utils.logger")

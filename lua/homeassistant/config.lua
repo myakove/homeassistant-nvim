@@ -66,6 +66,7 @@ local defaults = {
     picker = "<leader>hp",           -- Open entity picker (requires telescope)
     reload_cache = "<leader>hr",     -- Reload entity cache
     debug = "<leader>hD",            -- Show debug info
+    edit_dashboard = "<leader>he",   -- Edit HA Lovelace dashboards
   },
 }
 

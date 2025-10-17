@@ -196,6 +196,7 @@ require("homeassistant").setup({
     enabled = true,                  -- Default: true - Set to false to disable all keymaps
     dashboard = "<leader>hd",        -- Default: <leader>hd - Toggle dashboard
     picker = "<leader>hp",           -- Default: <leader>hp - Entity picker (requires telescope)
+    edit_dashboard = "<leader>he",   -- Default: <leader>he - Edit HA dashboards
     reload_cache = "<leader>hr",     -- Default: <leader>hr - Reload cache
     debug = "<leader>hD",            -- Default: <leader>hD - Show debug info
   },
@@ -261,6 +262,7 @@ export HOMEASSISTANT_TOKEN="your-long-lived-access-token-here"
 - `:HADashboard` - Toggle the entity dashboard
 - `:HAEntityState <entity_id>` - View entity state in floating window
 - `:HAPicker` - Open Telescope picker for entity selection
+- `:HAEditDashboard` - Edit Home Assistant Lovelace dashboards
 - `:HAReloadCache` - Manually reload entity cache
 - `:HAHover` - Show entity info for entity under cursor
 - `:HADebug` - Show plugin debug information (includes HA version when connected)
@@ -367,6 +369,7 @@ The plugin automatically sets up these keymaps:
 |--------|---------|-------------|
 | `<leader>hd` | `:HADashboard` | Toggle entity dashboard |
 | `<leader>hp` | `:HAPicker` | Open entity picker (requires telescope) |
+| `<leader>he` | `:HAEditDashboard` | Edit HA Lovelace dashboards |
 | `<leader>hr` | `:HAReloadCache` | Reload entity cache |
 | `<leader>hD` | `:HADebug` | Show debug information |
 
@@ -378,11 +381,52 @@ require("homeassistant").setup({
     enabled = true,               -- Set to false to disable all keymaps
     dashboard = "<leader>ha",     -- Change to your preferred key
     picker = nil,                 -- Set to nil to disable this keymap
+    edit_dashboard = "<leader>he", -- Keep default
     reload_cache = "<F5>",        -- Use F5 for reload
     debug = "<leader>hD",         -- Keep default
   },
 })
 ```
+
+### Dashboard Editing
+
+Edit Home Assistant Lovelace dashboards directly from Neovim:
+
+**How it works:**
+
+1. Run `:HAEditDashboard` or press `<leader>he`
+2. Select a dashboard from the picker (Telescope or vim.ui.select)
+3. Edit the configuration in JSON format
+4. Save with `:w` to update Home Assistant
+5. Changes appear immediately in HA's UI
+
+**Features:**
+
+- ✅ **Storage-mode dashboards only** - YAML-mode dashboards should be edited in your config files
+- ✅ **JSON format** - Easy to read and edit with syntax highlighting
+- ✅ **Real-time sync** - Changes saved directly to Home Assistant
+- ✅ **Telescope picker** - Quick dashboard selection (with fallback to vim.ui.select)
+
+**Example workflow:**
+
+```vim
+:HAEditDashboard      " Opens picker with available dashboards
+" Select 'Home' dashboard
+" Edit the JSON configuration
+:w                    " Save to Home Assistant
+```
+
+**Configuration:**
+
+```lua
+require("homeassistant").setup({
+  keymaps = {
+    edit_dashboard = "<leader>he",  -- Or set to nil to disable
+  },
+})
+```
+
+**Note:** This feature allows **write access** to your Home Assistant instance to update dashboard configurations. Only storage-mode dashboards (created/edited via UI) can be modified through the API.
 
 ## Architecture
 

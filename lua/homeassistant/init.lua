@@ -75,6 +75,10 @@ function M._register_commands()
     require("homeassistant.ui.picker").entities()
   end, { desc = "Pick and control Home Assistant entity" })
   
+  vim.api.nvim_create_user_command("HAEditDashboard", function()
+    require("homeassistant.ui.dashboard_editor").pick_dashboard()
+  end, { desc = "Edit Home Assistant Lovelace dashboard" })
+  
   vim.api.nvim_create_user_command("HAComplete", function()
     -- Manually trigger completion for debugging
     local has_blink = pcall(require, "blink.cmp")
@@ -207,6 +211,12 @@ function M._setup_keymaps()
   if maps.debug then
     vim.keymap.set("n", maps.debug, "<cmd>HADebug<cr>", 
       { desc = "HA Debug Info", silent = true })
+  end
+  
+  -- Edit dashboard keymap
+  if maps.edit_dashboard then
+    vim.keymap.set("n", maps.edit_dashboard, "<cmd>HAEditDashboard<cr>", 
+      { desc = "HA Edit Dashboard", silent = true })
   end
 end
 
