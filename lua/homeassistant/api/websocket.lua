@@ -75,7 +75,7 @@ function M:_connect_via_python()
   
   local script_path = script_paths[1]
   
-  -- Try uv run --with first (no installation needed!)
+  -- Use uv run --with (zero installation, on-demand dependencies)
   self.job_id = vim.fn.jobstart({"uv", "run", "--with", "websockets", "python3", script_path, self.url, self.token}, {
     on_stdout = function(_, data, _)
       self:_on_stdout(data)
@@ -91,28 +91,10 @@ function M:_connect_via_python()
   })
   
   if self.job_id <= 0 then
-    -- uv not found, try regular python3 (requires websockets installed)
-    logger.warn("uv not found, trying python3 directly (requires websockets to be installed)")
-    self.job_id = vim.fn.jobstart({"python3", script_path, self.url, self.token}, {
-      on_stdout = function(_, data, _)
-        self:_on_stdout(data)
-      end,
-      on_stderr = function(_, data, _)
-        self:_on_stderr(data)
-      end,
-      on_exit = function(_, code, _)
-        self:_on_exit(code)
-      end,
-      stdout_buffered = false,
-      stderr_buffered = false,
-    })
-    
-    if self.job_id <= 0 then
-      logger.error("Failed to start WebSocket client")
-      self.state = STATE.ERROR
-      if self.connect_callback then
-        self.connect_callback("Failed to start client", false)
-      end
+    logger.error("Failed to start WebSocket client. Is 'uv' installed? See: https://docs.astral.sh/uv/getting-started/installation/")
+    self.state = STATE.ERROR
+    if self.connect_callback then
+      self.connect_callback("Failed to start WebSocket client - uv not found", false)
     end
   end
 end

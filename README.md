@@ -15,7 +15,7 @@ A Neovim plugin for seamless Home Assistant integration using WebSocket API, pro
 
 - Neovim >= 0.8.0
 - Python 3
-- `uv` (recommended) **OR** Python with `websockets` library installed
+- **`uv` (REQUIRED)** - Zero-installation dependency management
 - **Completion engine (pick one):**
   - [blink.cmp](https://github.com/saghen/blink.cmp) - Modern, fast completion (recommended)
   - [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) - Popular completion framework
@@ -24,11 +24,9 @@ A Neovim plugin for seamless Home Assistant integration using WebSocket API, pro
 
 ## Installation
 
-### Python WebSocket Support
+### 1. Install uv (Required)
 
-**Option 1: Using uv (recommended - zero installation needed!)**
-
-The plugin uses `uv run --with websockets` which automatically downloads dependencies on-the-fly. No installation needed!
+The plugin uses `uv run --with websockets` to automatically manage Python dependencies on-the-fly. **No manual installation of Python packages needed!**
 
 Install uv:
 ```bash
@@ -41,23 +39,20 @@ yay -S uv                # Arch
 brew install uv          # macOS
 ```
 
-**Option 2: Without uv (requires manual websockets installation)**
+**Why uv?**
+- ✅ Zero installation - downloads dependencies on-demand
+- ✅ No `pip install` needed
+- ✅ No conflicts with system Python
+- ✅ Fast and reliable
+- ✅ Isolated environments per-project
 
-If you don't have uv, install websockets library:
-```bash
-pip install --user websockets
-# or
-sudo dnf install python3-websockets  # Fedora/RHEL
-sudo apt install python3-websockets  # Debian/Ubuntu
-```
-
-### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
+### 2. Install Plugin with lazy.nvim
 
 **With blink.cmp (recommended):**
 
 ```lua
 {
-  "yourusername/homeassistant.nvim",
+  "myakove/homeassistant.nvim",
   dependencies = {
     "saghen/blink.cmp", -- optional but recommended
     "nvim-telescope/telescope.nvim", -- optional
@@ -99,7 +94,7 @@ sudo apt install python3-websockets  # Debian/Ubuntu
 
 ```lua
 {
-  "yourusername/homeassistant.nvim",
+  "myakove/homeassistant.nvim",
   dependencies = {
     "hrsh7th/nvim-cmp",
     "nvim-telescope/telescope.nvim",
@@ -128,7 +123,7 @@ require("cmp").setup({
 
 ```lua
 use {
-  "yourusername/homeassistant.nvim",
+  "myakove/homeassistant.nvim",
   requires = {
     "hrsh7th/nvim-cmp",
     "nvim-telescope/telescope.nvim",
@@ -290,20 +285,20 @@ This plugin uses the official Home Assistant WebSocket API for all communication
 
 If you're having trouble connecting:
 
-1. Verify Python 3 and `websockets` are installed: `python3 -c "import websockets"`
-2. Check your Home Assistant URL is correct
-3. Verify your long-lived access token is valid
-4. Check logs with `:set logging.level = "debug"` in config
+1. **Verify `uv` is installed:** `uv --version`
+2. **Check Python 3 is available:** `python3 --version`
+3. **Verify Home Assistant URL** is correct (including `http://` or `https://`)
+4. **Check your access token** is valid (from HA profile page)
+5. **Enable debug logging:** Set `logging.level = "debug"` in config and check `:messages`
 
-### Python websockets not found
+### uv not found
 
+Install uv:
 ```bash
-# Install for your system Python
-pip install websockets
-
-# Or for a specific Python version
-python3 -m pip install websockets
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+Make sure `~/.cargo/bin` is in your `$PATH` (or restart your terminal after installation).
 
 ## Roadmap
 
