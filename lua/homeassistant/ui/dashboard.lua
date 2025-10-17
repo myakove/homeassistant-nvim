@@ -35,9 +35,16 @@ function M.open()
     return
   end
   
-  local api = require("homeassistant").get_api()
-  if not api then
-    logger.error("API not initialized")
+  local lsp_client = require("homeassistant").get_lsp_client()
+  if not lsp_client or not lsp_client.is_connected() then
+    logger.error("LSP not connected")
+    vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
+    return
+  end
+  
+  local client = lsp_client.get_client()
+  if not client then
+    logger.error("LSP client not found")
     return
   end
   
@@ -63,9 +70,9 @@ function M.open()
   -- Set loading message
   floating.set_lines(M.buf, { "", "  Loading data...", "" })
   
-  -- Fetch all data in parallel
+  -- Fetch all data in parallel using LSP commands
   local fetch_count = 0
-  local total_fetches = 4
+  local total_fetches = 3  -- entities, services, areas
   local function check_complete()
     fetch_count = fetch_count + 1
     if fetch_count == total_fetches then
@@ -74,48 +81,57 @@ function M.open()
   end
   
   -- Fetch entities
-  api:get_states(function(err, entities)
-    if err then
-      logger.error("Failed to fetch entities: " .. err)
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.listEntities",
+    arguments = {},
+  }, function(err, result)
+    if err or not result or not result.success then
+      logger.error("Failed to fetch entities: " .. (err and vim.inspect(err) or (result and result.error or "unknown")))
       M.data.entities = {}
     else
-      M.data.entities = entities or {}
+      M.data.entities = result.data or {}
     end
     check_complete()
-  end)
+  end, client.id)
   
   -- Fetch services
-  api:get_services(function(err, services)
-    if err then
-      logger.error("Failed to fetch services: " .. err)
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.listServices",
+    arguments = {},
+  }, function(err, result)
+    if err or not result or not result.success then
+      logger.error("Failed to fetch services: " .. (err and vim.inspect(err) or (result and result.error or "unknown")))
       M.data.services = {}
     else
-      M.data.services = services or {}
+      M.data.services = result.data or {}
     end
     check_complete()
-  end)
+  end, client.id)
   
   -- Fetch areas
-  api.client.ws:get_areas(function(err, areas)
-    if err then
-      logger.debug("Failed to fetch areas: " .. err)
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.listAreas",
+    arguments = {},
+  }, function(err, result)
+    if err or not result or not result.success then
+      logger.debug("Failed to fetch areas: " .. (err and vim.inspect(err) or (result and result.error or "unknown")))
       M.data.areas = {}
-    else
-      M.data.areas = areas or {}
-    end
-    check_complete()
-  end)
-  
-  -- Fetch entity registry
-  api.client.ws:get_entity_registry(function(err, registry)
-    if err then
-      logger.debug("Failed to fetch entity registry: " .. err)
       M.data.entity_registry = {}
     else
-      M.data.entity_registry = registry or {}
+      M.data.areas = result.data or {}
+      -- Build entity registry from area data if available
+      local registry_map = {}
+      for _, area in ipairs(M.data.areas) do
+        if area.entities then
+          for _, entity_id in ipairs(area.entities) do
+            registry_map[entity_id] = { area_id = area.area_id }
+          end
+        end
+      end
+      M.data.entity_registry = registry_map
     end
     check_complete()
-  end)
+  end, client.id)
   
   -- Setup keymaps
   M._setup_keymaps()

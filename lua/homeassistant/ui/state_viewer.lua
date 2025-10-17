@@ -6,9 +6,16 @@ local M = {}
 
 -- Show entity state
 function M.show(entity_id)
-  local api = require("homeassistant").get_api()
-  if not api then
-    logger.error("API not initialized")
+  local lsp_client = require("homeassistant").get_lsp_client()
+  if not lsp_client or not lsp_client.is_connected() then
+    logger.error("LSP not connected")
+    vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
+    return
+  end
+  
+  local client = lsp_client.get_client()
+  if not client then
+    logger.error("LSP client not found")
     return
   end
   
@@ -26,15 +33,19 @@ function M.show(entity_id)
   -- Set loading message
   floating.set_lines(buf, { "Loading..." })
   
-  -- Fetch entity state
-  api:get_state(entity_id, function(err, state)
-    if err then
-      floating.set_lines(buf, { "Error: " .. err })
+  -- Fetch entity state via LSP
+  client.request("workspace/executeCommand", {
+    command = "homeassistant.getEntityState",
+    arguments = { entity_id },
+  }, function(err, result)
+    if err or not result or not result.success then
+      local error_msg = err and vim.inspect(err) or (result and result.error or "unknown error")
+      floating.set_lines(buf, { "Error: " .. error_msg })
       return
     end
     
-    M._render_state(buf, state, config)
-  end)
+    M._render_state(buf, result.data, config)
+  end, client.id)
 end
 
 -- Render entity state

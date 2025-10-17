@@ -3,31 +3,33 @@ local M = {}
 
 -- Default configuration
 local defaults = {
-  -- Home Assistant connection settings
-  homeassistant = {
-    host = "http://localhost:8123",
-    token = nil, -- Long-lived access token
-    timeout = 5000, -- Request timeout in ms
-    verify_ssl = true,
-  },
-  
-  -- Completion settings
-  completion = {
-    enabled = true,
-    entity_prefix = "entity:", -- Trigger prefix for entity completion
-    service_prefix = "service:", -- Trigger prefix for service completion
-    auto_trigger = true, -- Auto-trigger on typing
-  },
-  
-  -- LSP features
+  -- LSP Server settings
   lsp = {
-    enabled = true, -- Enable LSP-like features
-    hover = true, -- Show entity info on hover (CursorHold)
-    diagnostics = true, -- Validate entity references and show warnings
-    go_to_definition = true, -- Enable gd keymap to jump to entity info
+    enabled = true, -- Enable LSP client
+    cmd = { "homeassistant-lsp", "--stdio" }, -- LSP server command
+    filetypes = { "yaml", "yaml.homeassistant", "python" }, -- File types to attach
+    root_dir = nil, -- Auto-detect root directory (uses lspconfig.util.root_pattern)
+    settings = {
+      homeassistant = {
+        host = "ws://localhost:8123/api/websocket", -- WebSocket URL
+        token = nil, -- REQUIRED: Long-lived access token
+        timeout = 5000, -- Request timeout in ms
+      },
+      cache = {
+        enabled = true,
+        ttl = 300, -- Cache TTL in seconds (5 minutes)
+      },
+      diagnostics = {
+        enabled = true,
+        debounce = 500, -- Debounce diagnostics in ms
+      },
+      completion = {
+        minChars = 3, -- Minimum characters for domain completion
+      },
+    },
   },
   
-  -- UI settings
+  -- UI settings (Neovim-specific)
   ui = {
     dashboard = {
       width = 0.8, -- 80% of screen width
@@ -41,22 +43,9 @@ local defaults = {
     },
   },
   
-  -- Cache settings
-  cache = {
-    enabled = true,
-    ttl = 300, -- Cache TTL in seconds (5 minutes)
-    auto_refresh = true, -- Auto-refresh cache on file save
-  },
-  
-  -- Logging
+  -- Logging (plugin-level, not LSP)
   logging = {
     level = "info", -- debug, info, warn, error
-    file = nil, -- Log file path (nil = no file logging)
-  },
-  
-  -- WebSocket settings (for live updates)
-  websocket = {
-    enabled = false, -- Disabled by default
   },
   
   -- Keymaps
@@ -64,7 +53,7 @@ local defaults = {
     enabled = true, -- Set to false to disable all default keymaps
     dashboard = "<leader>hd",       -- Toggle dashboard
     picker = "<leader>hp",           -- Open entity picker (requires telescope)
-    reload_cache = "<leader>hr",     -- Reload entity cache
+    reload_cache = "<leader>hr",     -- Reload LSP cache
     debug = "<leader>hD",            -- Show debug info
     edit_dashboard = "<leader>he",   -- Edit HA Lovelace dashboards
   },
@@ -77,9 +66,9 @@ function M.setup(user_config)
   config = vim.tbl_deep_extend("force", defaults, user_config or {})
   
   -- Validate required fields
-  if not config.homeassistant.token then
+  if config.lsp.settings and config.lsp.settings.homeassistant and not config.lsp.settings.homeassistant.token then
     vim.notify(
-      "Home Assistant token not configured. Please set homeassistant.token in setup()",
+      "Home Assistant token not configured. Please set lsp.settings.homeassistant.token in setup()",
       vim.log.levels.WARN
     )
   end

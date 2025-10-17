@@ -6,105 +6,76 @@ function M.check()
   
   health.start("homeassistant.nvim")
   
-  -- Check uv installation
-  if vim.fn.executable("uv") == 1 then
-    local version = vim.fn.system("uv --version"):gsub("\n", "")
-    health.ok("uv is installed: " .. version)
+  -- Check if homeassistant-lsp is installed
+  if vim.fn.executable("homeassistant-lsp") == 1 then
+    health.ok("homeassistant-lsp is installed")
   else
-    health.error("uv is not installed", {
-      "Install uv: https://docs.astral.sh/uv/getting-started/installation/",
-      "curl -LsSf https://astral.sh/uv/install.sh | sh",
+    health.error("homeassistant-lsp is not installed", {
+      "Install: npm install -g homeassistant-lsp",
+      "Or see: https://github.com/myakove/homeassistant-lsp",
     })
   end
   
-  -- Check Python 3
-  if vim.fn.executable("python3") == 1 then
-    local version = vim.fn.system("python3 --version"):gsub("\n", "")
-    health.ok("Python 3 is available: " .. version)
+  -- Check nvim-lspconfig
+  local has_lspconfig = pcall(require, "lspconfig")
+  if has_lspconfig then
+    health.ok("nvim-lspconfig is installed")
   else
-    health.warn("Python 3 not found (uv will handle it)")
+    health.error("nvim-lspconfig is not installed", {
+      "Install: lazy = { 'neovim/nvim-lspconfig' }",
+    })
   end
   
   -- Check if plugin is initialized
   local ok, ha = pcall(require, "homeassistant")
-  if ok and ha.get_api then
-    local api = ha.get_api()
-    if api then
+  if ok and ha.get_lsp_client then
+    local lsp_client = ha.get_lsp_client()
+    if lsp_client then
       health.ok("Plugin is initialized")
       
-      -- Check WebSocket connection state
-      if api.client and api.client.ws then
-        local ws = api.client.ws
+      -- Check LSP connection
+      if lsp_client.is_connected() then
+        health.ok("LSP client is connected")
         
         -- Show configured URL
         local config = require("homeassistant.config")
-        local ha_config = config.get().homeassistant
-        health.info("URL: " .. (ha_config.host or "not configured"))
-        
-        -- Check WebSocket state directly (synchronous)
-        if ws.state == "connected" then
-          health.ok("Connected to Home Assistant WebSocket")
-          
-          -- Check cache for HA config
-          local cache = require("homeassistant.utils.cache")
-          local ha_info = cache.get("ha_config")
-          local cached_entities = cache.get("entities:all")
-          
-          if ha_info then
-            health.info("Version: " .. (ha_info.version or "unknown"))
-            health.info("Location: " .. (ha_info.location_name or "unknown"))
-          end
-          
-          if cached_entities and #cached_entities > 0 then
-            local domains = {}
-            for _, entity in ipairs(cached_entities) do
-              domains[entity.domain] = (domains[entity.domain] or 0) + 1
-            end
-            health.info("Entities: " .. #cached_entities .. " across " .. vim.tbl_count(domains) .. " domains")
-          end
-          
-          if not ha_info or not cached_entities then
-            health.info("Run :HADebug to fetch and cache HA version info")
-          end
-        elseif ws.state == "connecting" or ws.state == "authenticating" then
-          health.warn("WebSocket is connecting...", {
-            "Wait a moment and run :checkhealth again",
-          })
-        else
-          health.error("WebSocket not connected (state: " .. (ws.state or "unknown") .. ")", {
-            "Check your host and token in config",
-            "Verify Home Assistant is running",
-            "Check :messages for connection errors",
-          })
+        local lsp_config = config.get().lsp
+        if lsp_config and lsp_config.settings and lsp_config.settings.homeassistant then
+          health.info("Host: " .. (lsp_config.settings.homeassistant.host or "not configured"))
         end
+        
+        health.info("LSP server is providing: completion, hover, diagnostics, commands")
       else
-        health.error("WebSocket client not initialized", {
-          "Plugin may not be configured correctly",
+        health.warn("LSP client not connected", {
+          "Make sure you're in a YAML or Python file",
+          "Check :LspInfo for connection status",
+          "Check LSP logs: ~/.local/state/nvim/lsp.log",
         })
       end
     else
-      health.error("Plugin initialized but API not available")
+      health.error("Plugin initialized but LSP client not available", {
+        "LSP may be disabled in config",
+        "Check your setup() call",
+      })
     end
   else
     health.error("Plugin not initialized", {
       "Add to your Neovim config:",
-      'require("homeassistant").setup({ homeassistant = { host = "...", token = "..." } })',
+      'require("homeassistant").setup({',
+      '  lsp = {',
+      '    settings = {',
+      '      homeassistant = {',
+      '        host = "ws://localhost:8123/api/websocket",',
+      '        token = "your-token-here"',
+      '      }',
+      '    }',
+      '  }',
+      '})',
     })
   end
   
-  -- Check completion engines
-  local has_blink = pcall(require, "blink.cmp")
-  local has_cmp = pcall(require, "cmp")
-  
-  if has_blink then
-    health.ok("Completion engine: blink.cmp detected")
-  elseif has_cmp then
-    health.ok("Completion engine: nvim-cmp detected")
-  else
-    health.warn("No completion engine found", {
-      "Install blink.cmp or nvim-cmp for completion support",
-    })
-  end
+  -- Check LSP completion capability
+  health.info("Completion is provided by LSP (works with any LSP-compatible client)")
   
   -- Check telescope (optional)
   local has_telescope = pcall(require, "telescope")
