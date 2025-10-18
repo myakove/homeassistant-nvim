@@ -48,7 +48,7 @@ Or see the [homeassistant-lsp installation guide](https://github.com/myakove/hom
         -- LSP server command (default: homeassistant-lsp --stdio)
         cmd = { "homeassistant-lsp", "--stdio" },
         -- File types to attach LSP to
-        filetypes = { "yaml", "yaml.homeassistant", "python" },
+        filetypes = { "yaml", "yaml.homeassistant", "python", "json" },
         -- LSP server settings
         settings = {
           homeassistant = {
@@ -102,7 +102,7 @@ require("homeassistant").setup({
   lsp = {
     enabled = true,                    -- Default: true - Enable LSP client
     cmd = { "homeassistant-lsp", "--stdio" }, -- Default: homeassistant-lsp --stdio
-    filetypes = { "yaml", "yaml.homeassistant", "python" }, -- Default file types
+    filetypes = { "yaml", "yaml.homeassistant", "python", "json" }, -- Default file types
     root_dir = nil,                    -- Default: auto-detect via lspconfig
     
     settings = {
