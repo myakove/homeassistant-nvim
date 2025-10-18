@@ -6,7 +6,7 @@ local logger = require("homeassistant.utils.logger")
 function M.setup(user_config)
   local init_opts = user_config.lsp.settings or {}
   local cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" }
-  local filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python" }
+  local filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python", "json" }
   
   vim.lsp.config('homeassistant', {
     cmd = cmd,
