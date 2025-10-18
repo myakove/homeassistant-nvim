@@ -607,7 +607,7 @@ end
 
 -- Start filter input
 function M._start_filter()
-  vim.ui.input({ prompt = "Filter: ", default = M.filter_text }, function(input)
+  vim.ui.input({ prompt = "Filter: " }, function(input)
     if input then
       M.filter_text = input
       M._render()
