@@ -53,13 +53,20 @@ function M._register_commands()
   end, { nargs = 1, desc = "Show entity state" })
   
   vim.api.nvim_create_user_command("HAReloadCache", function()
-    -- Reload cache via LSP command
     if M._lsp_client and M._lsp_client.is_connected() then
-      vim.lsp.buf.execute_command({
-        command = "homeassistant.reloadCache",
-        arguments = {},
-      })
-      vim.notify("Reloading Home Assistant cache...", vim.log.levels.INFO)
+      local client = M._lsp_client.get_client()
+      if client then
+        client.request('workspace/executeCommand', {
+          command = "homeassistant.reloadCache",
+          arguments = {},
+        }, function(err, result)
+          if err then
+            vim.notify("Failed to reload cache: " .. err.message, vim.log.levels.ERROR)
+          else
+            vim.notify("Reloading Home Assistant cache...", vim.log.levels.INFO)
+          end
+        end)
+      end
     else
       vim.notify("LSP not connected", vim.log.levels.ERROR)
     end
