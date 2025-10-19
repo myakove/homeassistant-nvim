@@ -4,25 +4,25 @@ local M = {}
 -- Create a centered floating window
 function M.create_centered_float(config)
   config = config or {}
-  
+
   local width = config.width or 0.8
   local height = config.height or 0.8
   local border = config.border or "rounded"
-  
+
   -- Calculate dimensions
   local ui = vim.api.nvim_list_uis()[1]
   local win_width = math.floor(ui.width * width)
   local win_height = math.floor(ui.height * height)
-  
+
   -- Calculate position
   local row = math.floor((ui.height - win_height) / 2)
   local col = math.floor((ui.width - win_width) / 2)
-  
+
   -- Create buffer
   local buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_option(buf, "bufhidden", "wipe")
   vim.api.nvim_buf_set_option(buf, "filetype", config.filetype or "")
-  
+
   -- Window options
   local win_opts = {
     relative = "editor",
@@ -32,7 +32,7 @@ function M.create_centered_float(config)
     col = col,
     style = "minimal",
   }
-  
+
   -- Handle border configuration
   if type(border) == "table" and border.text then
     -- Advanced border with text
@@ -53,15 +53,15 @@ function M.create_centered_float(config)
       win_opts.title_pos = "center"
     end
   end
-  
+
   -- Create window
   local win = vim.api.nvim_open_win(buf, true, win_opts)
-  
+
   -- Set window options
   vim.api.nvim_win_set_option(win, "cursorline", true)
   vim.api.nvim_win_set_option(win, "number", false)
   vim.api.nvim_win_set_option(win, "relativenumber", false)
-  
+
   -- Close keymaps
   local close_keys = { "q", "<Esc>" }
   for _, key in ipairs(close_keys) do
@@ -73,7 +73,7 @@ function M.create_centered_float(config)
       { noremap = true, silent = true }
     )
   end
-  
+
   return buf, win
 end
 

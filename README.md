@@ -20,6 +20,25 @@ A Neovim plugin for seamless Home Assistant integration via LSP, providing intel
 - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) (optional) - For entity picker
 - Home Assistant instance with API access
 
+## Development
+
+### Pre-commit Hooks
+
+This project uses pre-commit hooks to ensure code quality. To set up:
+
+```bash
+# Install the hooks
+prek install
+
+# Run on all files
+prek run
+```
+
+The hooks include:
+- **StyLua** - Lua code formatter
+- **Luacheck** - Lua linter and static analyzer
+- Standard checks (trailing whitespace, end-of-file, etc.)
+
 ## Installation
 
 ### 1. Install homeassistant-lsp (Required)
@@ -104,7 +123,7 @@ require("homeassistant").setup({
     cmd = { "homeassistant-lsp", "--stdio" }, -- Default: homeassistant-lsp --stdio
     filetypes = { "yaml", "yaml.homeassistant", "python", "json" }, -- Default file types
     root_dir = nil,                    -- Default: auto-detect via lspconfig
-    
+
     settings = {
       homeassistant = {
         host = "ws://localhost:8123/api/websocket", -- WebSocket URL
@@ -124,7 +143,7 @@ require("homeassistant").setup({
       },
     },
   },
-  
+
   -- UI settings (Neovim-specific)
   ui = {
     dashboard = {
@@ -138,12 +157,12 @@ require("homeassistant").setup({
       show_attributes = true,          -- Default: true
     },
   },
-  
+
   -- Logging (plugin-level, not LSP)
   logging = {
     level = "info",                    -- Default: "info" (debug, info, warn, error)
   },
-  
+
   -- Keymaps
   keymaps = {
     enabled = true,                    -- Default: true - Set to false to disable all keymaps

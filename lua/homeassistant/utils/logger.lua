@@ -28,14 +28,14 @@ local function log(level, message)
   if level_num < get_level_num() then
     return
   end
-  
+
   local prefix = string.format("[homeassistant.nvim] [%s]", level:upper())
   local full_message = string.format("%s %s", prefix, message)
-  
+
   -- Log to Neovim
   local vim_level = vim.log.levels[level:upper()] or vim.log.levels.INFO
   vim.notify(full_message, vim_level)
-  
+
   -- Log to file if configured
   if config and config.logging.file then
     local file = io.open(config.logging.file, "a")

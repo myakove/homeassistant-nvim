@@ -7,7 +7,7 @@ function M.setup(user_config)
   local init_opts = user_config.lsp.settings or {}
   local cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" }
   local filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python", "json" }
-  
+
   vim.lsp.config('homeassistant', {
     cmd = cmd,
     filetypes = filetypes,
@@ -18,16 +18,16 @@ function M.setup(user_config)
     end,
     capabilities = vim.lsp.protocol.make_client_capabilities(),
   })
-  
+
   vim.lsp.enable('homeassistant')
-  
+
   -- Start LSP immediately with hidden keepalive buffer
   vim.schedule(function()
     local buf = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_name(buf, 'homeassistant-keepalive.yaml')
     vim.bo[buf].bufhidden = 'hide'
     vim.bo[buf].filetype = 'yaml'
-    
+
     vim.lsp.start({
       name = 'homeassistant',
       cmd = cmd,
@@ -35,7 +35,7 @@ function M.setup(user_config)
       init_options = init_opts,
     }, { bufnr = buf })
   end)
-  
+
   return true
 end
 
@@ -47,7 +47,7 @@ function M.execute_command(command, arguments, callback)
     command = command,
     arguments = arguments or {},
   })
-  
+
   if callback then
     vim.defer_fn(function()
       callback(nil, true)

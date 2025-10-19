@@ -34,22 +34,22 @@ function M.open()
   if M.is_open then
     return
   end
-  
+
   local lsp_client = require("homeassistant").get_lsp_client()
   if not lsp_client or not lsp_client.is_connected() then
     logger.error("LSP not connected")
     vim.notify("Home Assistant LSP not connected", vim.log.levels.ERROR)
     return
   end
-  
+
   local client = lsp_client.get_client()
   if not client then
     logger.error("LSP client not found")
     return
   end
-  
+
   local config = require("homeassistant.config").get()
-  
+
   -- Create floating window with keybindings at bottom
   M.buf, M.win = floating.create_centered_float({
     width = config.ui.dashboard.width,
@@ -64,12 +64,12 @@ function M.open()
     },
     filetype = "ha-dashboard",
   })
-  
+
   M.is_open = true
-  
+
   -- Set loading message
   floating.set_lines(M.buf, { "", "  Loading data...", "" })
-  
+
   -- Fetch all data in parallel using LSP commands
   local fetch_count = 0
   local total_fetches = 3  -- entities, services, areas
@@ -79,7 +79,7 @@ function M.open()
       M._render()
     end
   end
-  
+
   -- Fetch entities
   client.request("workspace/executeCommand", {
     command = "homeassistant.listEntities",
@@ -93,7 +93,7 @@ function M.open()
     end
     check_complete()
   end, client.id)
-  
+
   -- Fetch services
   client.request("workspace/executeCommand", {
     command = "homeassistant.listServices",
@@ -107,7 +107,7 @@ function M.open()
     end
     check_complete()
   end, client.id)
-  
+
   -- Fetch areas
   client.request("workspace/executeCommand", {
     command = "homeassistant.listAreas",
@@ -132,10 +132,10 @@ function M.open()
     end
     check_complete()
   end, client.id)
-  
+
   -- Setup keymaps
   M._setup_keymaps()
-  
+
   -- Autocommand to update state when window closes
   vim.api.nvim_create_autocmd("WinClosed", {
     buffer = M.buf,
@@ -163,29 +163,29 @@ function M._render()
   if not M.buf or not vim.api.nvim_buf_is_valid(M.buf) then
     return
   end
-  
+
   -- Clear section line mapping
   M.section_lines = {}
-  
+
   local lines = {}
-  
+
   -- Simple clean header
   local entity_count = #M.data.entities
   local service_count = vim.tbl_count(M.data.services)
-  
+
   table.insert(lines, "")
   table.insert(lines, string.format("  View: %s | Tab: %s | Filter: %s",
     M.current_view, M.current_tab, M.filter_text == "" and "none" or M.filter_text))
   table.insert(lines, string.format("  Entities: %d | Services: %d", entity_count, service_count))
   table.insert(lines, "")
-  
+
   -- Render current tab content
   if M.current_tab == "entities" then
     M._render_entities(lines)
   else
     M._render_services(lines)
   end
-  
+
   floating.set_lines(M.buf, lines)
 end
 
@@ -213,30 +213,30 @@ function M._render_by_domains(lines)
       table.insert(by_domain[domain], entity)
     end
   end
-  
+
   -- Sort domains
   local sorted_domains = {}
   for domain, _ in pairs(by_domain) do
     table.insert(sorted_domains, domain)
   end
   table.sort(sorted_domains)
-  
+
   -- Render each domain
   for _, domain in ipairs(sorted_domains) do
     local entities = by_domain[domain]
     local section_key = "domain_" .. domain
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
-    
+
     local icon = is_collapsed and "▶" or "▼"
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s %s (%d)", icon, domain:upper(), #entities))
-    
+
     if not is_collapsed then
       for _, entity in ipairs(entities) do
         local area_name = M._get_entity_area(entity.entity_id)
@@ -258,11 +258,11 @@ function M._render_by_areas(lines)
   for _, area in ipairs(M.data.areas) do
     area_map[area.area_id] = area.name
   end
-  
+
   -- Group by area
   local by_area = {}
   local unassigned = {}
-  
+
   for _, entity in ipairs(M.data.entities) do
     if M._matches_filter(entity) then
       local area_id = M._get_entity_area_id(entity.entity_id)
@@ -277,30 +277,30 @@ function M._render_by_areas(lines)
       end
     end
   end
-  
+
   -- Sort areas
   local sorted_areas = {}
   for area_name, _ in pairs(by_area) do
     table.insert(sorted_areas, area_name)
   end
   table.sort(sorted_areas)
-  
+
   -- Render each area
   for _, area_name in ipairs(sorted_areas) do
     local entities = by_area[area_name]
     local section_key = "area_" .. area_name
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
-    
+
     local icon = is_collapsed and "▶" or "▼"
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s %s (%d)", icon, area_name, #entities))
-    
+
     if not is_collapsed then
       for _, entity in ipairs(entities) do
         local state_icon = M._get_state_icon(entity.state)
@@ -312,22 +312,22 @@ function M._render_by_areas(lines)
       end
     end
   end
-  
+
   -- Render unassigned
   if #unassigned > 0 then
     local section_key = "area_unassigned"
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
     local icon = is_collapsed and "▶" or "▼"
-    
+
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s Unassigned (%d)", icon, #unassigned))
-    
+
     if not is_collapsed then
       for _, entity in ipairs(unassigned) do
         local state_icon = M._get_state_icon(entity.state)
@@ -347,7 +347,7 @@ function M._render_by_status(lines)
   local on_states = {}
   local off_states = {}
   local unavailable_states = {}
-  
+
   for _, entity in ipairs(M.data.entities) do
     if M._matches_filter(entity) then
       local state = entity.state:lower()
@@ -363,22 +363,22 @@ function M._render_by_status(lines)
       end
     end
   end
-  
+
   -- Render ON/OPEN/HOME
   if #on_states > 0 then
     local section_key = "status_on"
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
     local icon = is_collapsed and "▶" or "▼"
-    
+
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s ON/OPEN/HOME (%d)", icon, #on_states))
-    
+
     if not is_collapsed then
       for _, entity in ipairs(on_states) do
         local area_name = M._get_entity_area(entity.entity_id)
@@ -391,22 +391,22 @@ function M._render_by_status(lines)
       end
     end
   end
-  
+
   -- Render OFF/CLOSED/AWAY
   if #off_states > 0 then
     local section_key = "status_off"
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
     local icon = is_collapsed and "▶" or "▼"
-    
+
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s OFF/CLOSED/AWAY (%d)", icon, #off_states))
-    
+
     if not is_collapsed then
       for _, entity in ipairs(off_states) do
         local area_name = M._get_entity_area(entity.entity_id)
@@ -419,22 +419,22 @@ function M._render_by_status(lines)
       end
     end
   end
-  
+
   -- Render UNAVAILABLE
   if #unavailable_states > 0 then
     local section_key = "status_unavailable"
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
     local icon = is_collapsed and "▶" or "▼"
-    
+
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s UNAVAILABLE (%d)", icon, #unavailable_states))
-    
+
     if not is_collapsed then
       for _, entity in ipairs(unavailable_states) do
         local area_name = M._get_entity_area(entity.entity_id)
@@ -457,25 +457,25 @@ function M._render_services(lines)
     table.insert(sorted_domains, domain)
   end
   table.sort(sorted_domains)
-  
+
   -- Render each domain
   for _, domain in ipairs(sorted_domains) do
     local domain_services = M.data.services[domain]
     local service_count = vim.tbl_count(domain_services)
-    
+
     local section_key = "service_" .. domain
-    
+
     -- Default to collapsed if not set
     if M.collapsed_sections[section_key] == nil then
       M.collapsed_sections[section_key] = true
     end
     local is_collapsed = M.collapsed_sections[section_key]
     local icon = is_collapsed and "▶" or "▼"
-    
+
     local line_num = #lines + 1
     M.section_lines[line_num] = section_key
     table.insert(lines, string.format("  %s %s (%d services)", icon, domain:upper(), service_count))
-    
+
     if not is_collapsed then
       for service_name, service_data in pairs(domain_services) do
         local description = service_data.description or "No description"
@@ -490,7 +490,7 @@ end
 -- Get state icon
 function M._get_state_icon(state)
   local s = state:lower()
-  
+
   if s == "on" or s == "open" or s == "home" then
     return "●"  -- Green filled circle
   elseif s == "off" or s == "closed" or s == "away" then
@@ -508,13 +508,13 @@ function M._get_entity_area(entity_id)
   if not area_id then
     return nil
   end
-  
+
   for _, area in ipairs(M.data.areas) do
     if area.area_id == area_id then
       return area.name
     end
   end
-  
+
   return nil
 end
 
@@ -533,14 +533,14 @@ function M._matches_filter(entity)
   if M.filter_text == "" then
     return true
   end
-  
+
   local filter = M.filter_text:lower()
   local entity_id = entity.entity_id:lower()
   local name = entity.name:lower()
   local state = entity.state:lower()
-  
-  return entity_id:find(filter, 1, true) or 
-         name:find(filter, 1, true) or 
+
+  return entity_id:find(filter, 1, true) or
+         name:find(filter, 1, true) or
          state:find(filter, 1, true)
 end
 
@@ -549,27 +549,27 @@ function M._setup_keymaps()
   if not M.buf or not vim.api.nvim_buf_is_valid(M.buf) then
     return
   end
-  
+
   local opts = { noremap = true, silent = true, buffer = M.buf }
-  
+
   -- Refresh
   vim.keymap.set("n", "r", function() M._refresh() end, opts)
-  
+
   -- Switch views
   vim.keymap.set("n", "d", function() M._switch_view("domains") end, opts)
   vim.keymap.set("n", "a", function() M._switch_view("areas") end, opts)
   vim.keymap.set("n", "s", function() M._switch_view("status") end, opts)
-  
+
   -- Switch tabs
   vim.keymap.set("n", "t", function() M._switch_tab() end, opts)
-  
+
   -- Filter
   vim.keymap.set("n", "/", function() M._start_filter() end, opts)
-  
+
   -- Toggle section collapse/expand
   vim.keymap.set("n", "<CR>", function() M._toggle_section() end, opts)
   vim.keymap.set("n", "<Space>", function() M._toggle_section() end, opts)
-  
+
   -- Close
   vim.keymap.set("n", "q", function() M.close() end, opts)
   vim.keymap.set("n", "<Esc>", function() M.close() end, opts)
@@ -596,7 +596,7 @@ function M._toggle_section()
   local cursor = vim.api.nvim_win_get_cursor(M.win)
   local line_num = cursor[1]
   local section_key = M.section_lines[line_num]
-  
+
   if section_key then
     M.collapsed_sections[section_key] = not M.collapsed_sections[section_key]
     M._render()

@@ -28,7 +28,7 @@ local defaults = {
       },
     },
   },
-  
+
   -- UI settings (Neovim-specific)
   ui = {
     dashboard = {
@@ -42,12 +42,12 @@ local defaults = {
       show_attributes = true,
     },
   },
-  
+
   -- Logging (plugin-level, not LSP)
   logging = {
     level = "info", -- debug, info, warn, error
   },
-  
+
   -- Keymaps
   keymaps = {
     enabled = true, -- Set to false to disable all default keymaps
@@ -64,7 +64,7 @@ local config = vim.deepcopy(defaults)
 -- Setup configuration with user overrides
 function M.setup(user_config)
   config = vim.tbl_deep_extend("force", defaults, user_config or {})
-  
+
   -- Validate required fields
   if config.lsp.settings and config.lsp.settings.homeassistant and not config.lsp.settings.homeassistant.token then
     vim.notify(
@@ -83,7 +83,7 @@ end
 function M.get_value(path)
   local keys = vim.split(path, ".", { plain = true })
   local value = config
-  
+
   for _, key in ipairs(keys) do
     if value[key] then
       value = value[key]
@@ -91,7 +91,7 @@ function M.get_value(path)
       return nil
     end
   end
-  
+
   return value
 end
 
