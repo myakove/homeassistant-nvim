@@ -66,11 +66,39 @@ function M.setup(user_config)
   config = vim.tbl_deep_extend("force", defaults, user_config or {})
 
   -- Validate required fields
-  if config.lsp.settings and config.lsp.settings.homeassistant and not config.lsp.settings.homeassistant.token then
-    vim.notify(
-      "Home Assistant token not configured. Please set lsp.settings.homeassistant.token in setup()",
-      vim.log.levels.WARN
-    )
+  if config.lsp.settings and config.lsp.settings.homeassistant then
+    local ha_config = config.lsp.settings.homeassistant
+    local token = ha_config.token
+
+    -- Validate token
+    if not token or type(token) ~= "string" or #token == 0 then
+      vim.notify(
+        "Home Assistant token not configured. Please set lsp.settings.homeassistant.token in setup()",
+        vim.log.levels.WARN
+      )
+    elseif #token < 20 then
+      vim.notify(
+        "Home Assistant token appears invalid (too short). Long-lived access tokens are typically much longer.",
+        vim.log.levels.WARN
+      )
+    end
+
+    -- Validate host URL format
+    local host = ha_config.host
+    if host and type(host) == "string" then
+      if not (host:match("^ws://") or host:match("^wss://")) then
+        vim.notify(
+          "Home Assistant host should start with 'ws://' or 'wss://' for WebSocket connection",
+          vim.log.levels.WARN
+        )
+      end
+      if not host:match("/api/websocket$") then
+        vim.notify(
+          "Home Assistant host should end with '/api/websocket'",
+          vim.log.levels.WARN
+        )
+      end
+    end
   end
 end
 

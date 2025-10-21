@@ -61,7 +61,8 @@ function M._register_commands()
           arguments = {},
         }, function(err, result)
           if err then
-            vim.notify("Failed to reload cache: " .. err.message, vim.log.levels.ERROR)
+            local err_msg = type(err) == "table" and err.message or tostring(err)
+            vim.notify("Failed to reload cache: " .. err_msg, vim.log.levels.ERROR)
           else
             vim.notify("Reloading Home Assistant cache...", vim.log.levels.INFO)
           end
@@ -88,7 +89,7 @@ function M._register_commands()
       return
     end
     -- Trigger LSP completion
-    vim.lsp.buf.completion()
+    vim.lsp.completion.trigger()
   end, { desc = "Manually trigger Home Assistant completion (Insert mode only)" })
 
   vim.api.nvim_create_user_command("HADebug", function()

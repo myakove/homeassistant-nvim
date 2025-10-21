@@ -271,7 +271,7 @@ function M._save_dashboard(buf)
       vim.notify("Dashboard saved successfully!", vim.log.levels.INFO)
       vim.api.nvim_buf_set_option(buf, "modified", false)
     end
-  end, client.id)
+  end, buf)
 end
 
 return M

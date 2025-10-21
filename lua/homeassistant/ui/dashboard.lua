@@ -75,7 +75,7 @@ function M.open()
   local total_fetches = 3  -- entities, services, areas
   local function check_complete()
     fetch_count = fetch_count + 1
-    if fetch_count == total_fetches then
+    if fetch_count >= total_fetches then
       M._render()
     end
   end
@@ -92,7 +92,7 @@ function M.open()
       M.data.entities = result.data or {}
     end
     check_complete()
-  end, client.id)
+  end, M.buf)
 
   -- Fetch services
   client.request("workspace/executeCommand", {
@@ -106,7 +106,7 @@ function M.open()
       M.data.services = result.data or {}
     end
     check_complete()
-  end, client.id)
+  end, M.buf)
 
   -- Fetch areas
   client.request("workspace/executeCommand", {
@@ -131,7 +131,7 @@ function M.open()
       M.data.entity_registry = registry_map
     end
     check_complete()
-  end, client.id)
+  end, M.buf)
 
   -- Setup keymaps
   M._setup_keymaps()
