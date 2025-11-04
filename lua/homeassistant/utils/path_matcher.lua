@@ -15,20 +15,30 @@ function M.matches(filepath, patterns)
     return false
   end
 
-  -- Normalize path: convert to forward slashes for consistent matching
-  local normalized = filepath:gsub("\\", "/")
+  -- Normalize filepath: convert to forward slashes and get absolute path
+  local normalized = vim.fn.fnamemodify(filepath, ":p"):gsub("\\", "/")
 
   -- Check each pattern
   for _, pattern in ipairs(patterns) do
-    -- First try plain text matching (for simple paths)
-    -- Then try Lua pattern matching (for patterns with escapes like %-)
-    if normalized:find(pattern, 1, true) or normalized:match(pattern) then
+    -- Expand ~ in pattern to match user's home directory
+    local expanded_pattern = vim.fn.expand(pattern)
+    local normalized_pattern = expanded_pattern:gsub("\\", "/")
+
+    -- Use plain text matching first (most reliable for path matching)
+    -- This matches the logic in the user's init function
+    if normalized:find(normalized_pattern, 1, true) then
       return true
     end
+
+    -- Also try Lua pattern matching (for patterns with escapes like %-)
+    if normalized:match(normalized_pattern) then
+      return true
+    end
+
     -- Also try converting Lua pattern escapes to plain text for find()
     -- e.g., "%-" -> "-" for plain text matching
-    local plain_pattern = pattern:gsub("%%([%-%.%+%*%?%^%$%(%)%[%]%%])", "%1")
-    if plain_pattern ~= pattern and normalized:find(plain_pattern, 1, true) then
+    local plain_pattern = normalized_pattern:gsub("%%([%-%.%+%*%?%^%$%(%)%[%]%%])", "%1")
+    if plain_pattern ~= normalized_pattern and normalized:find(plain_pattern, 1, true) then
       return true
     end
   end

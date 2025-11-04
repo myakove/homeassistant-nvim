@@ -23,9 +23,26 @@ function M.setup(user_config)
     -- No path restrictions, initialize immediately
     M._do_setup()
   else
-    -- Path restrictions configured - check current buffer before initializing
-    -- Also trigger lazy setup to check immediately
-    M._lazy_setup()
+    -- Path restrictions configured - DO NOT initialize automatically
+    -- Just store the config. Initialization will happen only when:
+    -- 1. User's lazy.nvim init function calls lazy.load() for matching files
+    -- 2. Plugin's setup() is called from config function (which happens when plugin loads)
+    --    At that point, we rely on the user's init function to only load the plugin
+    --    when paths match, so we can initialize here safely
+    -- But to be extra safe, check the current buffer path before initializing
+    local current_buf = vim.api.nvim_get_current_buf()
+    local filepath = vim.api.nvim_buf_get_name(current_buf)
+
+    if filepath and filepath ~= "" then
+      local current_path = vim.fn.fnamemodify(filepath, ":p")
+      local path_matcher = require("homeassistant.utils.path_matcher")
+      -- Only initialize if path actually matches
+      if path_matcher.matches(current_path, paths) then
+        M._do_setup()
+      end
+      -- If path doesn't match, don't initialize - plugin stays inactive
+    end
+    -- If no filepath when setup() is called, don't initialize
   end
 end
 

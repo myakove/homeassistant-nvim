@@ -7,11 +7,18 @@ function M.setup(user_config)
   local ok, err = pcall(function()
     local init_opts = user_config.lsp.settings or {}
     local cmd = user_config.lsp.cmd or { "homeassistant-lsp", "--stdio" }
-    local filetypes = user_config.lsp.filetypes or { "yaml", "yaml.homeassistant", "python", "json" }
+    local filetypes = user_config.lsp.filetypes
+      or { "yaml", "yaml.homeassistant", "python", "json" }
 
     -- Validate command exists
     if cmd[1] and vim.fn.executable(cmd[1]) == 0 then
-      logger.warn(string.format("LSP command '%s' not found in PATH. Please install homeassistant-lsp: npm install -g homeassistant-lsp", cmd[1]))
+      logger.warn(
+        string.format(
+          "LSP command '%s' not found in PATH. "
+            .. "Please install homeassistant-lsp: npm install -g homeassistant-lsp",
+          cmd[1]
+        )
+      )
     end
 
     -- Get completion capabilities from completion plugin (blink.cmp, nvim-cmp, etc.)
@@ -37,6 +44,16 @@ function M.setup(user_config)
 
     logger.debug("LSP capabilities: " .. vim.inspect(capabilities.textDocument.completion))
 
+    -- Store config for per-buffer attachment
+    M._lsp_config = {
+      cmd = cmd,
+      filetypes = filetypes,
+      root_dir = vim.fn.getcwd(),
+      init_options = init_opts,
+      capabilities = capabilities,
+    }
+
+    -- Register LSP config
     vim.lsp.config('homeassistant', {
       cmd = cmd,
       filetypes = filetypes,
@@ -48,14 +65,75 @@ function M.setup(user_config)
       capabilities = capabilities,
     })
 
-    vim.lsp.enable('homeassistant')
+    -- Check if path restrictions are configured
+    local user_cfg = require("homeassistant.config").get()
+    local paths = user_cfg.paths
+
+    if paths == nil or #paths == 0 then
+      -- No path restrictions - enable globally for configured filetypes
+      vim.lsp.enable('homeassistant')
+    else
+      -- Path restrictions - use autocommands to attach only to matching buffers
+      -- This prevents interference with other LSPs (like Lua LSP) on non-matching files
+      vim.api.nvim_create_autocmd({ "BufRead", "BufNewFile", "BufEnter" }, {
+        group = vim.api.nvim_create_augroup("HomeAssistantLSPAttach", { clear = true }),
+        callback = function(event)
+          local bufnr = event.buf
+          local filepath = vim.api.nvim_buf_get_name(bufnr)
+
+          if filepath == "" or not filepath then
+            return
+          end
+
+          -- Check if path matches
+          local path_matcher = require("homeassistant.utils.path_matcher")
+          local current_path = vim.fn.fnamemodify(filepath, ":p")
+
+          if not path_matcher.matches(current_path, paths) then
+            return
+          end
+
+          -- Check if filetype matches configured filetypes
+          local buf_filetype = vim.bo[bufnr].filetype
+          local matches_filetype = false
+          for _, ft in ipairs(filetypes) do
+            if buf_filetype == ft then
+              matches_filetype = true
+              break
+            end
+          end
+
+          if not matches_filetype then
+            return
+          end
+
+          -- Check if LSP is already attached to this buffer
+          local clients = vim.lsp.get_clients({ bufnr = bufnr, name = "homeassistant" })
+          if #clients > 0 then
+            return
+          end
+
+          -- Attach LSP to this buffer
+          vim.lsp.start({
+            name = 'homeassistant',
+            cmd = cmd,
+            root_dir = vim.fn.getcwd(),
+            init_options = init_opts,
+            capabilities = capabilities,
+            on_attach = function(client, attached_bufnr)
+              M._setup_lsp_commands(client, attached_bufnr)
+            end,
+          }, { bufnr = bufnr })
+        end,
+      })
+    end
 
     -- Start LSP immediately with hidden keepalive buffer
     vim.schedule(function()
       local buf = vim.api.nvim_create_buf(false, true)
       vim.api.nvim_buf_set_name(buf, 'homeassistant-keepalive.yaml')
-      vim.bo[buf].bufhidden = 'hide'
-      vim.bo[buf].filetype = 'yaml'
+      vim.api.nvim_buf_set_option(buf, 'bufhidden', 'hide')
+      vim.api.nvim_buf_set_option(buf, 'filetype', 'yaml')
 
       vim.lsp.start({
         name = 'homeassistant',

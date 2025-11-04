@@ -53,6 +53,8 @@ Or see the [homeassistant-lsp installation guide](https://github.com/myakove/hom
 
 ### 2. Install Plugin with lazy.nvim
 
+**Basic setup (loads on all files):**
+
 ```lua
 {
   "myakove/homeassistant-nvim",
@@ -60,6 +62,7 @@ Or see the [homeassistant-lsp installation guide](https://github.com/myakove/hom
     "neovim/nvim-lspconfig",          -- Required for LSP
     "nvim-telescope/telescope.nvim",  -- Optional, for entity picker
   },
+  event = { "BufRead", "BufNewFile" }, -- Load on file open
   config = function()
     require("homeassistant").setup({
       lsp = {
@@ -106,6 +109,39 @@ Or see the [homeassistant-lsp installation guide](https://github.com/myakove/hom
 }
 ```
 
+**Path-based loading (recommended if you only work with HA files in specific directories):**
+
+```lua
+{
+  "myakove/homeassistant-nvim",
+  dependencies = {
+    "neovim/nvim-lspconfig",
+    "nvim-telescope/telescope.nvim",
+  },
+  event = { "BufRead", "BufNewFile" }, -- Plugin file loads on file open
+  config = function()
+    require("homeassistant").setup({
+      -- Only initialize when files match these paths
+      paths = { "config/homeassistant/", "~/dotfiles/" },
+      lsp = {
+        enabled = true,
+        cmd = { "homeassistant-lsp", "--stdio" },
+        filetypes = { "yaml", "yaml.homeassistant", "python", "json" },
+        settings = {
+          homeassistant = {
+            host = "ws://homeassistant.local:8123/api/websocket",
+            token = "your_long_lived_access_token_here",
+            timeout = 5000,
+          },
+          cache = { enabled = true, ttl = 300 },
+          diagnostics = { enabled = true, debounce = 500 },
+        },
+      },
+    })
+  end,
+}
+```
+
 **Note:** Completion is provided by the LSP server and works automatically with any LSP-compatible completion plugin (blink.cmp, nvim-cmp, coq_nvim, etc.). No additional configuration needed!
 
 ## Configuration
@@ -146,7 +182,13 @@ require("homeassistant").setup({
 **Important distinction:**
 - `paths` controls **when the plugin initializes** (loads only for matching file paths)
 - `lsp.filetypes` controls **which file types get LSP features** (completion, hover, diagnostics)
-- These are independent: Even with path-based loading, you still need to configure `filetypes` to specify which file types should have LSP support
+- **When `paths` is configured**: LSP only attaches to buffers that match **BOTH** the configured paths **AND** the configured filetypes
+- **When `paths` is NOT configured**: LSP attaches to all buffers matching the configured filetypes (default behavior)
+
+**Benefits of path-based LSP attachment:**
+- ✅ Prevents interference with other LSPs (e.g., Lua LSP won't conflict on Lua files in matching paths)
+- ✅ More efficient: LSP only runs where needed
+- ✅ Better isolation: Each file type gets its appropriate LSP
 
 **Example:**
 ```lua
@@ -154,12 +196,20 @@ require("homeassistant").setup({
   -- Plugin only loads when editing files in Home Assistant config directory
   paths = { "config/homeassistant/" },
 
-  -- But when loaded, LSP attaches to these file types
+  -- LSP attaches only to YAML/Python/JSON files in matching paths
+  -- Other file types (like Lua) in matching paths won't get HA LSP attached
   lsp = {
     filetypes = { "yaml", "yaml.homeassistant", "python", "json" },
   },
 })
 ```
+
+**Real-world scenario:**
+If you have `paths = { "~/dotfiles/" }` and open a Lua file in `~/dotfiles/config.lua`:
+- ✅ Plugin file loads (because path matches)
+- ✅ Plugin initializes (because path matches)
+- ❌ HA LSP does NOT attach (because Lua is not in `filetypes`)
+- ✅ Your Lua LSP works normally (no interference)
 
 <details>
 <summary>Full Configuration Example</summary>
