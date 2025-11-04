@@ -7,8 +7,9 @@ if exists('g:loaded_homeassistant')
 endif
 let g:loaded_homeassistant = 1
 
-" This file runs when lazy.nvim loads the plugin (which only happens when paths match)
+" This file runs when lazy.nvim loads the plugin
 " Set up autocommands to check paths when switching buffers
+" Autocommands only register, actual initialization happens in _lazy_setup() based on paths
 augroup HomeAssistantPathCheck
   autocmd!
   autocmd BufEnter * lua pcall(function() require("homeassistant")._lazy_setup(vim.api.nvim_get_current_buf()) end)
