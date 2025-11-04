@@ -17,13 +17,14 @@ function M.setup(user_config)
 
   local user_cfg = config.get()
 
-  -- If paths are configured, we'll initialize lazily via autocommands
-  -- Otherwise, initialize immediately (backward compatibility)
-  if user_cfg.paths == nil or #user_cfg.paths == 0 then
+  local paths = user_cfg.paths
+
+  if paths == nil or #paths == 0 then
     -- No path restrictions, initialize immediately
     M._do_setup()
   else
-    -- Path restrictions configured, check current buffer
+    -- Path restrictions configured - check current buffer before initializing
+    -- Also trigger lazy setup to check immediately
     M._lazy_setup()
   end
 end
@@ -62,40 +63,64 @@ function M._do_setup()
 end
 
 -- Lazy setup function called by autocommands when path matches
-function M._lazy_setup()
+-- Returns true if initialization happened, false otherwise
+-- @param buf: Optional buffer number to check (defaults to current buffer)
+function M._lazy_setup(buf)
   -- Skip if already initialized
   if M._initialized then
-    return
+    return true
   end
 
   -- Check if user has called setup() yet
   if not M._user_config then
     -- User hasn't called setup() yet, nothing to do
-    return
+    return false
   end
 
-  -- Check if current buffer path matches configured patterns
+  -- Check if buffer path matches configured patterns
   local path_matcher = require("homeassistant.utils.path_matcher")
-  local current_path = path_matcher.get_current_path()
+  local buf_to_check = buf or vim.api.nvim_get_current_buf()
+  local filepath = vim.api.nvim_buf_get_name(buf_to_check)
 
-  if not current_path then
-    -- No file path, skip
-    return
+  if filepath == "" or not filepath then
+    -- No file path, skip - don't initialize for buffers without files
+    return false
   end
+
+  local current_path = vim.fn.fnamemodify(filepath, ":p")
 
   local user_cfg = config.get()
-  if not path_matcher.matches(current_path, user_cfg.paths) then
+  local paths = user_cfg.paths
+
+  if paths == nil or #paths == 0 then
+    -- No paths configured (or empty), initialize
+    M._do_setup()
+    return true
+  end
+
+  -- Check if path matches
+  local matches = path_matcher.matches(current_path, paths)
+
+  if not matches then
     -- Path doesn't match, skip initialization
-    return
+    return false
   end
 
   -- Path matches, initialize now
   M._do_setup()
+  return true
 end
 
 -- Register user commands
 function M._register_commands()
   vim.api.nvim_create_user_command("HADashboard", function()
+    if not M._initialized then
+      vim.notify(
+        "Home Assistant plugin not initialized. Check path configuration.",
+        vim.log.levels.WARN
+      )
+      return
+    end
     require("homeassistant.ui.dashboard").toggle()
   end, { desc = "Toggle Home Assistant dashboard" })
 

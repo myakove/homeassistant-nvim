@@ -20,7 +20,15 @@ function M.matches(filepath, patterns)
 
   -- Check each pattern
   for _, pattern in ipairs(patterns) do
-    if normalized:match(pattern) then
+    -- First try plain text matching (for simple paths)
+    -- Then try Lua pattern matching (for patterns with escapes like %-)
+    if normalized:find(pattern, 1, true) or normalized:match(pattern) then
+      return true
+    end
+    -- Also try converting Lua pattern escapes to plain text for find()
+    -- e.g., "%-" -> "-" for plain text matching
+    local plain_pattern = pattern:gsub("%%([%-%.%+%*%?%^%$%(%)%[%]%%])", "%1")
+    if plain_pattern ~= pattern and normalized:find(plain_pattern, 1, true) then
       return true
     end
   end
