@@ -112,6 +112,55 @@ Or see the [homeassistant-lsp installation guide](https://github.com/myakove/hom
 
 All configuration options with their **default values**:
 
+### Path-Based Conditional Loading
+
+By default, the plugin loads automatically on all files. You can configure it to only load when files match specific path patterns:
+
+```lua
+require("homeassistant").setup({
+  -- Only load plugin when editing files in Home Assistant config directory
+  paths = { "config/homeassistant/", "/homeassistant/" },
+
+  -- Or match by file extension
+  paths = { "%.yaml$", "%.yml$" },
+
+  -- Or combine both
+  paths = { "config/homeassistant/", "%.yaml$" },
+
+  -- Patterns are Lua patterns (see :help pattern)
+  -- Use %- to match literal - (hyphen)
+  paths = { "home%-assistant%-config/" },
+
+  -- If paths is nil or empty, plugin loads everywhere (default)
+  paths = nil,  -- or paths = {}
+})
+```
+
+**When to use path-based loading:**
+- ✅ You only work with Home Assistant files in specific directories
+- ✅ You want to reduce plugin overhead when editing other files
+- ✅ You have multiple Home Assistant instances and want to load selectively
+
+**Note:** If `paths` is not configured (or is `nil`/empty), the plugin loads on all files for backward compatibility.
+
+**Important distinction:**
+- `paths` controls **when the plugin initializes** (loads only for matching file paths)
+- `lsp.filetypes` controls **which file types get LSP features** (completion, hover, diagnostics)
+- These are independent: Even with path-based loading, you still need to configure `filetypes` to specify which file types should have LSP support
+
+**Example:**
+```lua
+require("homeassistant").setup({
+  -- Plugin only loads when editing files in Home Assistant config directory
+  paths = { "config/homeassistant/" },
+
+  -- But when loaded, LSP attaches to these file types
+  lsp = {
+    filetypes = { "yaml", "yaml.homeassistant", "python", "json" },
+  },
+})
+```
+
 <details>
 <summary>Full Configuration Example</summary>
 
@@ -172,6 +221,14 @@ require("homeassistant").setup({
     reload_cache = "<leader>hr",       -- Default: <leader>hr - Reload LSP cache
     debug = "<leader>hD",              -- Default: <leader>hD - Show debug info
   },
+
+  -- Path-based loading (optional)
+  -- If nil or empty, plugin loads on all files (default behavior)
+  -- If set to array of patterns, plugin only loads when file path matches any pattern
+  -- Patterns are Lua patterns (see :help pattern)
+  paths = nil,                         -- Default: nil - Load everywhere
+  -- Example: paths = { "config/homeassistant/", "/homeassistant/", "%.yaml$" }
+  -- Example: paths = { "home%-assistant%-config/" }  -- Use %- to match literal -
 })
 ```
 </details>

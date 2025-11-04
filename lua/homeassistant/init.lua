@@ -5,22 +5,41 @@ local config = require("homeassistant.config")
 -- Plugin state
 M._initialized = false
 M._lsp_client = nil
+M._user_config = nil -- Store user config for lazy setup
 
 -- Setup function called by users in their config
 function M.setup(user_config)
+  -- Store user config for potential lazy initialization
+  M._user_config = user_config
+
+  -- Merge user config with defaults (but don't initialize yet if paths are configured)
+  config.setup(user_config)
+
+  local user_cfg = config.get()
+
+  -- If paths are configured, we'll initialize lazily via autocommands
+  -- Otherwise, initialize immediately (backward compatibility)
+  if user_cfg.paths == nil or #user_cfg.paths == 0 then
+    -- No path restrictions, initialize immediately
+    M._do_setup()
+  else
+    -- Path restrictions configured, check current buffer
+    M._lazy_setup()
+  end
+end
+
+-- Internal function to perform actual initialization
+function M._do_setup()
   if M._initialized then
     require("homeassistant.utils.logger").warn("Plugin already initialized")
     return
   end
 
-  -- Merge user config with defaults
-  config.setup(user_config)
-
-  -- Initialize logger with config
-  require("homeassistant.utils.logger").init(config.get())
-
   local user_cfg = config.get()
   local logger = require("homeassistant.utils.logger")
+
+  -- Initialize logger with config
+  logger.init(user_cfg)
 
   -- Setup LSP client (if enabled)
   if user_cfg.lsp and user_cfg.lsp.enabled ~= false then
@@ -40,6 +59,38 @@ function M.setup(user_config)
   M._setup_keymaps()
 
   M._initialized = true
+end
+
+-- Lazy setup function called by autocommands when path matches
+function M._lazy_setup()
+  -- Skip if already initialized
+  if M._initialized then
+    return
+  end
+
+  -- Check if user has called setup() yet
+  if not M._user_config then
+    -- User hasn't called setup() yet, nothing to do
+    return
+  end
+
+  -- Check if current buffer path matches configured patterns
+  local path_matcher = require("homeassistant.utils.path_matcher")
+  local current_path = path_matcher.get_current_path()
+
+  if not current_path then
+    -- No file path, skip
+    return
+  end
+
+  local user_cfg = config.get()
+  if not path_matcher.matches(current_path, user_cfg.paths) then
+    -- Path doesn't match, skip initialization
+    return
+  end
+
+  -- Path matches, initialize now
+  M._do_setup()
 end
 
 -- Register user commands

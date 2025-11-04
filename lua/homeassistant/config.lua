@@ -57,6 +57,15 @@ local defaults = {
     debug = "<leader>hD",            -- Show debug info
     edit_dashboard = "<leader>he",   -- Edit HA Lovelace dashboards
   },
+
+  -- Path-based loading
+  -- If nil or empty, plugin loads on all files (default behavior)
+  -- If set to array of patterns, plugin only loads when file path matches any pattern
+  -- Patterns are Lua patterns (see :help pattern)
+  -- Examples:
+  --   paths = { "config/homeassistant/", "/homeassistant/", "%.yaml$" }
+  --   paths = { "home%-assistant%-config/" }  -- Use %- to match literal -
+  paths = nil, -- nil = load everywhere, array = only match these patterns
 }
 
 local config = vim.deepcopy(defaults)
@@ -73,12 +82,14 @@ function M.setup(user_config)
     -- Validate token
     if not token or type(token) ~= "string" or #token == 0 then
       vim.notify(
-        "Home Assistant token not configured. Please set lsp.settings.homeassistant.token in setup()",
+        "Home Assistant token not configured. "
+          .. "Please set lsp.settings.homeassistant.token in setup()",
         vim.log.levels.WARN
       )
     elseif #token < 20 then
       vim.notify(
-        "Home Assistant token appears invalid (too short). Long-lived access tokens are typically much longer.",
+        "Home Assistant token appears invalid (too short). "
+          .. "Long-lived access tokens are typically much longer.",
         vim.log.levels.WARN
       )
     end
